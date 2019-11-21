@@ -53,35 +53,37 @@ class Yolo:
         os.makedirs(os.path.join(formated_data_dir_path, 'val', 'labels'), exist_ok=True)
         os.makedirs(os.path.join(formated_data_dir_path, 'test', 'labels'), exist_ok=True)
 
-        set_cuts = [(0, train_cutoff), (train_cutoff, val_cutoff), (val_cutoff, len_data-1)]
-
         for index, image_filename in enumerate(self.annotations.keys()):
             if 0 <= index <= train_cutoff:
                 set = 'train'
-                metadata = self.annotations[image_filename]
+            elif train_cutoff <= index <= val_cutoff:
+                set = 'val'
+            else:
+                set = 'test'
+            self.create_label_and_move_img(formated_data_dir_path, image_filename, set)
 
-                labels = []
-                for triplet in metadata:
-                    label = self.mapping[triplet["id"]]
-                    if label:
-                        bbox = triplet["box"]
-                        bbox = self.normalize_bbox(bbox)
-                        labels.append([0] + bbox)
+    def create_label_and_move_img(self, formated_data_dir_path, image_filename, set):
+        metadata = self.annotations[image_filename]
+        labels = []
+        for triplet in metadata:
+            label = self.mapping[triplet["id"]]
+            if label:
+                bbox = triplet["box"]
+                bbox = self.normalize_bbox(bbox)
+                labels.append([0] + bbox)
+        image_filename_without_ext = os.path.splitext(image_filename)[0]
+        label_file_path = os.path.join(formated_data_dir_path, set, 'labels',
+                                       '{}.txt'.format(image_filename_without_ext))
 
-                image_filename_without_ext = os.path.splitext(image_filename)[0]
-                label_file_path = os.path.join(formated_data_dir_path, set, 'labels', '{}.txt'.format(image_filename_without_ext))
-                f = open("{}".format(label_file_path), "w")
-                for label in labels:
-                    str_label = " ".join(map(str, label))
-                    f.write(str_label+'\n')
-                f.close()
-                image_filepath = os.path.join(formated_data_dir_path, image_filename)
-                formated_image_filepath = os.path.join(formated_data_dir_path, set, 'JPEG_images', image_filename)
-                shutil.move(image_filepath, formated_image_filepath)
+        f = open("{}".format(label_file_path), "w")
+        for label in labels:
+            str_label = " ".join(map(str, label))
+            f.write(str_label + '\n')
+        f.close()
 
-            # if train_cutoff <= index <= val_cutoff:
-            # if val_cutoff <= index <= len_data-1:
-
+        image_filepath = os.path.join(formated_data_dir_path, image_filename)
+        formated_image_filepath = os.path.join(formated_data_dir_path, set, 'JPEG_images', image_filename)
+        shutil.move(image_filepath, formated_image_filepath)
 
     def run(self):
         if self.prepare_data:
