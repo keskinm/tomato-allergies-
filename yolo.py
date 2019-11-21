@@ -47,7 +47,8 @@ class Yolo:
         train_cutoff = round(self.split[0]*len_data)
         val_cutoff = round(train_cutoff + self.split[1]*len_data)
 
-        sets = [('train', 0, train_cutoff), ('val', train_cutoff, val_cutoff), ('test', val_cutoff, len(self.annotations) - 1)]
+        sets = [('train', 0, train_cutoff), ('val', train_cutoff, val_cutoff), ('test', val_cutoff, len(self.annotations) + 1)]
+
         for set, set_start_idx, set_end_idx in sets:
             pointer_opened_file = open("{}/{}.txt".format(formated_data_dir_path, set), "w")
             for index, image_filename in list(enumerate(self.annotations.keys()))[set_start_idx:set_end_idx]:
