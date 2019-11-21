@@ -3,10 +3,12 @@ import json
 import csv
 import os
 import shutil
+import random
+from random import shuffle
 
 
 class Yolo:
-    def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path, downsample, upsample):
+    def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path, downsample, upsample, seed):
         self.prepare_data = prepare_data
         self.annotations = self.parse_annotations(data_annotations_file_path)
         self.mapping = self.label_mapping(labels_mapping_file_path)
@@ -14,6 +16,7 @@ class Yolo:
         self.data_dir_path = data_dir_path
         self.downsample = downsample
         self.upsample = upsample
+        random.seed(seed)
 
     def compute_class_numbers(self):
         no_tomatoes = 0
@@ -78,7 +81,9 @@ class Yolo:
 
         for set, set_start_idx, set_end_idx in sets:
             labels_pointer_opened_file = open("{}/{}.txt".format(formated_data_dir_path, set), "w")
-            for index, image_filename in list(enumerate(self.annotations.keys()))[set_start_idx:set_end_idx]:
+            data_iterator = list(enumerate(self.annotations.keys()))
+            shuffle(data_iterator)
+            for index, image_filename in data_iterator[set_start_idx:set_end_idx]:
                 labels_pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages', image_filename.replace('jpeg', 'jpg')) + '\n')
                 self.create_label_file(formated_data_dir_path, image_filename)
             labels_pointer_opened_file.close()
@@ -133,6 +138,7 @@ if __name__ == "__main__":
     parser.add_argument("--labels-mapping-file-path", type=str, default='./data/label_mapping.csv', help="label mapping file")
     parser.add_argument('--split', nargs=3, default=[0.7, 0.15, 0.15], help='time range to pull scenes from')
     parser.add_argument('--data-dir-path', type=str, default='./data/assignment_imgs', help='path to the directory containing images')
+    parser.add_argument('--seed', type=int, default=43, help='random seed')
     args = parser.parse_args()
     args = vars(args)
     yolo = Yolo(**args)
