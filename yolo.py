@@ -56,7 +56,7 @@ class Yolo:
                 self.create_label_and_point_it(formated_data_dir_path, image_filename)
             pointer_opened_file.close()
 
-    def create_label_and_point_it(self, formated_data_dir_path, image_filename):
+    def create_label_file(self, formated_data_dir_path, image_filename):
         metadata = self.annotations[image_filename]
         labels = []
         for triplet in metadata:
