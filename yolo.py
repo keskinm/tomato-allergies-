@@ -39,30 +39,29 @@ class Yolo:
         data_dir_path = self.data_dir_path
         formated_data_dir_path = './data/formated'
         os.makedirs(formated_data_dir_path, exist_ok=True)
-        self.copytree(data_dir_path, formated_data_dir_path)
+        os.makedirs(os.path.join(formated_data_dir_path, 'JPEGImages'), exist_ok=True)
+        os.makedirs(os.path.join(formated_data_dir_path, 'labels'), exist_ok=True)
+        self.copytree(data_dir_path, os.path.join(formated_data_dir_path, 'JPEGImages'))
 
         len_data = len(self.annotations)
-        train_cutoff = self.split[0]*len_data
-        val_cutoff = train_cutoff + self.split[1]*len_data
+        train_cutoff = int(self.split[0]*len_data)
+        val_cutoff = int(train_cutoff + self.split[1]*len_data)
 
-        os.makedirs(os.path.join(formated_data_dir_path, 'train', 'JPEG_images'), exist_ok=True)
-        os.makedirs(os.path.join(formated_data_dir_path, 'val', 'JPEG_images'), exist_ok=True)
-        os.makedirs(os.path.join(formated_data_dir_path, 'test', 'JPEG_images'), exist_ok=True)
+        set = 'train'
+        pointer_opened_file = open("{}/{}.txt".format(formated_data_dir_path, set), "w")
+        for index, image_filename in list(enumerate(self.annotations.keys()))[0:train_cutoff]:
+            pointer_opened_file.write(os.path.join(formated_data_dir_path, 'JPEGImages', image_filename) + '\n')
+            self.create_label_and_point_it(formated_data_dir_path, image_filename, set)
+        pointer_opened_file.close()
 
-        os.makedirs(os.path.join(formated_data_dir_path, 'train', 'labels'), exist_ok=True)
-        os.makedirs(os.path.join(formated_data_dir_path, 'val', 'labels'), exist_ok=True)
-        os.makedirs(os.path.join(formated_data_dir_path, 'test', 'labels'), exist_ok=True)
+            # if 0 <= index <= train_cutoff:
+            #     set = 'train'
+            # elif train_cutoff <= index <= val_cutoff:
+            #     set = 'val'
+            # else:
+            #     set = 'test'
 
-        for index, image_filename in enumerate(self.annotations.keys()):
-            if 0 <= index <= train_cutoff:
-                set = 'train'
-            elif train_cutoff <= index <= val_cutoff:
-                set = 'val'
-            else:
-                set = 'test'
-            self.create_label_and_move_img(formated_data_dir_path, image_filename, set)
-
-    def create_label_and_move_img(self, formated_data_dir_path, image_filename, set):
+    def create_label_and_point_it(self, formated_data_dir_path, image_filename, set):
         metadata = self.annotations[image_filename]
         labels = []
         for triplet in metadata:
@@ -72,18 +71,12 @@ class Yolo:
                 bbox = self.normalize_bbox(bbox)
                 labels.append([0] + bbox)
         image_filename_without_ext = os.path.splitext(image_filename)[0]
-        label_file_path = os.path.join(formated_data_dir_path, set, 'labels',
-                                       '{}.txt'.format(image_filename_without_ext))
-
-        f = open("{}".format(label_file_path), "w")
+        label_file_path = os.path.join(formated_data_dir_path, 'labels', '{}.txt'.format(image_filename_without_ext))
+        label_opened_file = open("{}".format(label_file_path), "w")
         for label in labels:
             str_label = " ".join(map(str, label))
-            f.write(str_label + '\n')
-        f.close()
-
-        image_filepath = os.path.join(formated_data_dir_path, image_filename)
-        formated_image_filepath = os.path.join(formated_data_dir_path, set, 'JPEG_images', image_filename)
-        shutil.move(image_filepath, formated_image_filepath)
+            label_opened_file.write(str_label + '\n')
+        label_opened_file.close()
 
     def run(self):
         if self.prepare_data:
