@@ -10,6 +10,7 @@ import imgaug as ia
 from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
 from imgaug import augmenters as iaa
 import numpy as np
+import cv2
 
 
 class Yolo:
@@ -112,11 +113,12 @@ class Yolo:
         label_opened_file.close()
 
     def run(self):
-        self.up_sample_data()
-        if self.prepare_data:
-            if self.downsample:
-                self.down_sample_data()
-            self._prepare_data()
+        # self.up_sample_data()
+        # if self.prepare_data:
+        #     if self.downsample:
+        #         self.down_sample_data()
+        #     self._prepare_data()
+        self.inspect_bboxes()
 
     def parse_annotations(self, data_annotations_file_path):
         with open(data_annotations_file_path) as json_file:
@@ -188,7 +190,32 @@ class Yolo:
                     augmented_annotations.setdefault(aug_img_filename, [{"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False}])
 
     def inspect_bboxes(self):
-        pass
+        out = cv2.VideoWriter('output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 5, (600, 600))
+        i = 0
+        for _, img_filename in enumerate(self.annotations.keys()):
+            metadata = self.annotations[img_filename]
+            i+=1
+            bboxes = []
+            for triplet in metadata:
+                label = self.mapping[triplet["id"]]
+                if label:
+                    bbox = triplet["box"]
+                    bboxes.append(bbox)
+
+            img_file_path_prefix = self.data_dir_path
+            img_file_path = os.path.join(img_file_path_prefix, img_filename)
+            image = cv2.imread(img_file_path)
+
+            for bbox in bboxes:
+                cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[0]+bbox[2], bbox[1]+bbox[3]), (255, 0, 0), 2)
+
+            out.write(image)
+            cv2.imshow('frame', image)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            print(i)
+        out.release()
+        cv2.destroyAllWindows()
 
     def up_sample_data_draft_debug(self):
         img_file_path_prefix = self.data_dir_path
