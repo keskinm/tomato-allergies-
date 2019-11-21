@@ -172,9 +172,7 @@ class Yolo:
                     bbox = _normalize_bbox(bbox)
                     bboxes.append(bbox)
             if bboxes:
-                img_file_path_prefix = self.data_dir_path
-                img_file_path_suffix = list(self.annotations.keys())[10]
-                img_file_path = os.path.join(img_file_path_prefix, img_file_path_suffix)
+                img_file_path = os.path.join(self.data_dir_path, image_filename)
                 image = imageio.imread(img_file_path)
                 image = ia.imresize_single_image(image, (298, 447))
                 ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), shape=image.shape)
