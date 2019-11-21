@@ -145,6 +145,51 @@ class Yolo:
             bbox[3] /= h
             return bbox
 
+        def _unnormalize(bbox, h=600, w=600):
+            return bbox
+
+        os.makedirs('./data/augmented', exist_ok=True)
+
+        augmented_annotations = {}
+
+        augmentor = iaa.SomeOf(2, [
+            iaa.Affine(scale=(0.5, 1.5)),
+            iaa.Affine(rotate=(-60, 60)),
+            iaa.Affine(translate_percent={"x": (-0.3, 0.3), "y": (-0.3, 0.3)}),
+            iaa.Fliplr(1),
+            iaa.Multiply((0.5, 1.5)),
+            iaa.GaussianBlur(sigma=(1.0, 3.0)),
+            iaa.AdditiveGaussianNoise(scale=(0.03*255, 0.05*255))
+            ])
+
+        for _, image_filename in enumerate(self.annotations.keys()):
+            metadata = self.annotations[image_filename]
+            bboxes = []
+            for triplet in metadata:
+                label = self.mapping[triplet["id"]]
+                if label:
+                    bbox = triplet["box"]
+                    bbox = _normalize_bbox(bbox)
+                    bboxes.append(bbox)
+            if bboxes:
+                img_file_path_prefix = self.data_dir_path
+                img_file_path_suffix = list(self.annotations.keys())[10]
+                img_file_path = os.path.join(img_file_path_prefix, img_file_path_suffix)
+                image = imageio.imread(img_file_path)
+                image = ia.imresize_single_image(image, (298, 447))
+                ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), shape=image.shape)
+                aug_img, aug_bboxes = augmentor(image=image, bounding_boxes=ia_boxxes)
+                aug_bboxes.remove_out_of_image()
+                aug_bboxes.clip_out_of_image()
+                aug_img_filename = '{}_aug.jpg'.format(os.path.splitext(image_filename)[0])
+                imageio.imwrite('./data/augmented' + aug_img_filename, aug_img)
+                aug_bboxes = aug_bboxes.to_xyxy_array()
+                aug_bboxes = aug_bboxes.tolist()
+                aug_bboxes = _unnormalize(aug_bboxes)
+                for aug_bbox in aug_bboxes:
+                    augmented_annotations.setdefault(aug_img_filename, [{"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False}])
+
+    def up_sample_data_draft_debug(self):
         img_file_path_prefix = self.data_dir_path
         img_file_path_suffix = list(self.annotations.keys())[10]
         img_file_path = os.path.join(img_file_path_prefix, img_file_path_suffix)
@@ -163,50 +208,12 @@ class Yolo:
             iaa.Affine(translate_percent={"x": 0.1}, scale=0.8)
         ])
 
-        image_aug, bbs_aug = seq(image=image, bounding_boxes=bbs)
+        aug_img, aug_bboxes = seq(image=image, bounding_boxes=bbs)
 
-        print(bbs_aug)
-        print(image_aug)
-        print(type(bbs_aug.to_xyxy_array()))
-        print(type(image_aug))
-
-        images_sequence = []
-        bboxes_sequence = []
-
-        for _, image_filename in enumerate(self.annotations.keys()):
-            metadata = self.annotations[image_filename]
-            bboxes = []
-            for triplet in metadata:
-                label = self.mapping[triplet["id"]]
-                if label:
-                    bbox = triplet["box"]
-                    bbox = _normalize_bbox(bbox)
-                    bboxes.append(bbox)
-            if bboxes:
-                img_file_path_prefix = self.data_dir_path
-                img_file_path_suffix = list(self.annotations.keys())[10]
-                img_file_path = os.path.join(img_file_path_prefix, img_file_path_suffix)
-                image = imageio.imread(img_file_path)
-                image = ia.imresize_single_image(image, (298, 447))
-                images_sequence.append(image)
-                ia_boxxes = BoundingBoxesOnImage([BoundingBox(x1=bboxes[i][0], y1=bboxes[i][1], x2=bboxes[i][2], y2=bboxes[i][3]) for i in range(len(bboxes))], shape=image.shape)
-                bboxes_sequence.append(ia_boxxes)
-
-        seq = iaa.Sequential([
-            iaa.GammaContrast(1.5),
-            iaa.Affine(translate_percent={"x": 0.1}, scale=0.8)
-        ])
-
-        image_aug, bbs_aug = seq(image=images_sequence, bounding_boxes=bboxes_sequence)
-
-        print("allo", len(images_sequence))
-        print("alloallo", len(bboxes_sequence))
-
-        print(len(image_aug))
-        print(type(bbs_aug))
-
-        import time
-        time.sleep(1000)
+        print(aug_bboxes)
+        print(aug_img)
+        print(type(aug_bboxes.to_xyxy_array()))
+        print(type(aug_img))
 
 
 if __name__ == "__main__":
