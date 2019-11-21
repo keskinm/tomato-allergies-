@@ -189,6 +189,9 @@ class Yolo:
                 for aug_bbox in aug_bboxes:
                     augmented_annotations.setdefault(aug_img_filename, [{"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False}])
 
+    def inspect_bboxes(self):
+        pass
+
     def up_sample_data_draft_debug(self):
         img_file_path_prefix = self.data_dir_path
         img_file_path_suffix = list(self.annotations.keys())[10]
