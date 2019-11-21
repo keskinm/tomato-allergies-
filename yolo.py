@@ -52,7 +52,7 @@ class Yolo:
         for set, set_start_idx, set_end_idx in sets:
             pointer_opened_file = open("{}/{}.txt".format(formated_data_dir_path, set), "w")
             for index, image_filename in list(enumerate(self.annotations.keys()))[set_start_idx:set_end_idx]:
-                pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages', image_filename) + '\n')
+                pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages', image_filename.replace('jpeg', 'jpg')) + '\n')
                 self.create_label_and_point_it(formated_data_dir_path, image_filename)
             pointer_opened_file.close()
 
