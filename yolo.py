@@ -5,6 +5,11 @@ import os
 import shutil
 import random
 from random import shuffle
+import imageio
+import imgaug as ia
+from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
+from imgaug import augmenters as iaa
+import numpy as np
 
 
 class Yolo:
@@ -17,6 +22,7 @@ class Yolo:
         self.downsample = downsample
         self.upsample = upsample
         random.seed(seed)
+        ia.seed(seed)
 
     def compute_class_numbers(self):
         no_tomatoes = 0
@@ -55,7 +61,7 @@ class Yolo:
                     shutil.copy2(s, d.replace('jpeg', 'jpg'))
 
     @staticmethod
-    def normalize_bbox( bbox, h=600, w=600):
+    def normalize_bbox(bbox, h=600, w=600):
         bbox[0] = bbox[0] + bbox[2] / 2
         bbox[1] = bbox[1] + bbox[3] / 2
 
@@ -106,6 +112,7 @@ class Yolo:
         label_opened_file.close()
 
     def run(self):
+        self.up_sample_data()
         if self.prepare_data:
             if self.downsample:
                 self.down_sample_data()
@@ -127,6 +134,79 @@ class Yolo:
             labels = {row['labelling_id']: tomate_key(row) for row in csv_reader}
 
         return labels
+
+    def up_sample_data(self):
+        def _normalize_bbox(bbox, h=600, w=600):
+            bbox[2] = bbox[0] + bbox[2]
+            bbox[3] = bbox[1] + bbox[3]
+            bbox[0] /= w
+            bbox[1] /= h
+            bbox[2] /= w
+            bbox[3] /= h
+            return bbox
+
+        img_file_path_prefix = self.data_dir_path
+        img_file_path_suffix = list(self.annotations.keys())[10]
+        img_file_path = os.path.join(img_file_path_prefix, img_file_path_suffix)
+        image = imageio.imread(img_file_path)
+        image = ia.imresize_single_image(image, (298, 447))
+
+        bbs = BoundingBoxesOnImage([
+            BoundingBox(x1=0.2 * 447, x2=0.85 * 447, y1=0.3 * 298, y2=0.95 * 298),
+            BoundingBox(x1=0.4 * 447, x2=0.65 * 447, y1=0.1 * 298, y2=0.4 * 298)
+        ], shape=image.shape)
+
+        ia.imshow(bbs.draw_on_image(image, size=2))
+
+        seq = iaa.Sequential([
+            iaa.GammaContrast(1.5),
+            iaa.Affine(translate_percent={"x": 0.1}, scale=0.8)
+        ])
+
+        image_aug, bbs_aug = seq(image=image, bounding_boxes=bbs)
+
+        print(bbs_aug)
+        print(image_aug)
+        print(type(bbs_aug.to_xyxy_array()))
+        print(type(image_aug))
+
+        images_sequence = []
+        bboxes_sequence = []
+
+        for _, image_filename in enumerate(self.annotations.keys()):
+            metadata = self.annotations[image_filename]
+            bboxes = []
+            for triplet in metadata:
+                label = self.mapping[triplet["id"]]
+                if label:
+                    bbox = triplet["box"]
+                    bbox = _normalize_bbox(bbox)
+                    bboxes.append(bbox)
+            if bboxes:
+                ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), (600, 600, 3))
+                bboxes_sequence.append(ia_boxxes)
+                img_file_path_prefix = self.data_dir_path
+                img_file_path_suffix = list(self.annotations.keys())[10]
+                img_file_path = os.path.join(img_file_path_prefix, img_file_path_suffix)
+                image = imageio.imread(img_file_path)
+                image = ia.imresize_single_image(image, (298, 447))
+                images_sequence.append(image)
+
+        seq = iaa.Sequential([
+            iaa.GammaContrast(1.5),
+            iaa.Affine(translate_percent={"x": 0.1}, scale=0.8)
+        ])
+
+        image_aug, bbs_aug = seq(image=images_sequence, bounding_boxes=bboxes_sequence)
+
+        print("allo", len(images_sequence))
+        print("alloallo", len(bboxes_sequence))
+
+        print(len(image_aug))
+        print(type(bbs_aug))
+
+        import time
+        time.sleep(1000)
 
 
 if __name__ == "__main__":
