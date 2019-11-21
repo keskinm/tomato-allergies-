@@ -183,14 +183,14 @@ class Yolo:
                     bbox = _normalize_bbox(bbox)
                     bboxes.append(bbox)
             if bboxes:
-                ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), (600, 600, 3))
-                bboxes_sequence.append(ia_boxxes)
                 img_file_path_prefix = self.data_dir_path
                 img_file_path_suffix = list(self.annotations.keys())[10]
                 img_file_path = os.path.join(img_file_path_prefix, img_file_path_suffix)
                 image = imageio.imread(img_file_path)
                 image = ia.imresize_single_image(image, (298, 447))
                 images_sequence.append(image)
+                ia_boxxes = BoundingBoxesOnImage([BoundingBox(x1=bboxes[i][0], y1=bboxes[i][1], x2=bboxes[i][2], y2=bboxes[i][3]) for i in range(len(bboxes))], shape=image.shape)
+                bboxes_sequence.append(ia_boxxes)
 
         seq = iaa.Sequential([
             iaa.GammaContrast(1.5),
