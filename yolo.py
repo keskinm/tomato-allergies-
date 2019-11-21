@@ -22,7 +22,7 @@ class Yolo:
                 shutil.copytree(s, d, symlinks, ignore)
             else:
                 if not os.path.exists(d):
-                    shutil.copy2(s, d)
+                    shutil.copy2(s, d.replace('jpeg', 'jpg'))
 
     @staticmethod
     def normalize_bbox( bbox, h=600, w=600):
