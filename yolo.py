@@ -6,12 +6,39 @@ import shutil
 
 
 class Yolo:
-    def __init__(self, create_folders, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path):
-        self.create_folders = create_folders
+    def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path, downsample, upsample):
+        self.prepare_data = prepare_data
         self.annotations = self.parse_annotations(data_annotations_file_path)
         self.mapping = self.label_mapping(labels_mapping_file_path)
         self.split = split
         self.data_dir_path = data_dir_path
+        self.downsample = downsample
+        self.upsample = upsample
+
+    def compute_class_numbers(self):
+        no_tomatoes = 0
+        for _, img_filename in enumerate(self.annotations.keys()):
+            metadata = self.annotations[img_filename]
+            if not(self.mapping[metadata[0]['id']]):
+                no_tomatoes += 1
+        return no_tomatoes, (len(self.annotations) - no_tomatoes)
+
+    def down_sample_data(self, keep_negative_rate=0.05, keep_positive_rate=1.):
+        down_sampled_dataset = {}
+        total_negatives, total_positives = self.compute_class_numbers()
+
+        keep_negative_n, keep_positive_n = total_negatives*keep_negative_rate, total_positives*keep_positive_rate
+        no_tomatoes_count = 0
+        tomatoes_count = 0
+        for _, img_fname in enumerate(self.annotations.keys()):
+            metadata = self.annotations[img_fname]
+            if self.mapping[metadata[0]['id']] and tomatoes_count < keep_positive_n:
+                down_sampled_dataset.setdefault(img_fname, metadata)
+                tomatoes_count += 1
+            elif not(self.mapping[metadata[0]['id']]) and no_tomatoes_count < keep_negative_n:
+                down_sampled_dataset.setdefault(img_fname, metadata)
+                no_tomatoes_count += 1
+        self.annotations = down_sampled_dataset
 
     @staticmethod
     def copytree(src, dst, symlinks=False, ignore=None):
@@ -35,7 +62,7 @@ class Yolo:
         bbox[3] /= h
         return bbox
 
-    def prepare_data(self):
+    def _prepare_data(self):
         data_dir_path = self.data_dir_path
         formated_data_dir_path = './data/formated'
         os.makedirs(formated_data_dir_path, exist_ok=True)
@@ -75,7 +102,9 @@ class Yolo:
 
     def run(self):
         if self.prepare_data:
-            self.prepare_data()
+            if self.downsample:
+                self.down_sample_data()
+            self._prepare_data()
 
     def parse_annotations(self, data_annotations_file_path):
         with open(data_annotations_file_path) as json_file:
@@ -97,7 +126,9 @@ class Yolo:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--create-folders", action='store_true', help="create folders to use darknet")
+    parser.add_argument("--prepare-data", action='store_true', help="prepare data")
+    parser.add_argument("--downsample", action='store_true', help="downsampling data")
+    parser.add_argument("--upsample", action='store_true', help="upsampling data")
     parser.add_argument("--data-annotations-file_path", type=str, default="./data/img_annotations.json", help="path to data annotations file")
     parser.add_argument("--labels-mapping-file-path", type=str, default='./data/label_mapping.csv', help="label mapping file")
     parser.add_argument('--split', nargs=3, default=[0.7, 0.15, 0.15], help='time range to pull scenes from')
