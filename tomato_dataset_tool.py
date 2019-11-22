@@ -26,21 +26,20 @@ class TomatoDatasetTool:
         random.seed(seed)
         ia.seed(seed)
 
-    def compute_class_numbers(self):
-        tomatoes_count = 0
+    def positive_annotations(self):
+        positive_annotations = {}
         for _, img_filename in enumerate(self.annotations.keys()):
             metadata = self.annotations[img_filename]
-
             for triplet in metadata:
                 tomato = self.mapping[triplet["id"]]
                 if tomato:
-                    tomatoes_count += 1
-                    break
-        return (len(self.annotations) - tomatoes_count), tomatoes_count
+                    positive_annotations.setdefault(img_filename, []).append(metadata)
+        return positive_annotations
 
     def down_sample_data(self, keep_negative_rate=0.05, keep_positive_rate=1.):
         down_sampled_dataset = {}
-        total_negatives, total_positives = self.compute_class_numbers()
+        total_positives = len(self.positive_annotations())
+        total_negatives = 1 - total_positives
 
         keep_negative_n, keep_positive_n = total_negatives*keep_negative_rate, total_positives*keep_positive_rate
         no_tomatoes_count = 0
