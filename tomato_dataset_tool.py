@@ -127,6 +127,8 @@ class TomatoDatasetTool:
             gt_opened_file.close()
 
     def create_label_file(self, formated_data_dir_path, image_filename):
+        print(image_filename)
+
         metadata = self.annotations[image_filename]
         labels = []
         for triplet in metadata:
@@ -154,8 +156,6 @@ class TomatoDatasetTool:
             self.annotations = downsampled_annotations
 
         self.format_data()
-        # self.inspect_formated_bboxes_from_yolo_parser_pov()
-        # self.inspect_bboxes(augmented_annotations)
 
     def parse_annotations(self, data_annotations_file_path):
         with open(data_annotations_file_path) as json_file:
@@ -176,10 +176,7 @@ class TomatoDatasetTool:
 
     def up_sample_data(self):
         def ia_format_bbox(bbox):
-            new_bbox = bbox
-            new_bbox[2] = bbox[0] + bbox[2]
-            new_bbox[3] = bbox[1] + bbox[3]
-            return new_bbox
+            return [bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]]
 
         def reverse_ia_format_bbox(bbox):
             new_bbox = bbox
@@ -207,8 +204,7 @@ class TomatoDatasetTool:
                 tomato = self.mapping[triplet["id"]]
                 assert tomato
                 bbox = triplet["box"]
-                bbox = ia_format_bbox(bbox)
-                bboxes.append(bbox)
+                bboxes.append(ia_format_bbox(bbox))
             img_file_path = os.path.join(self.data_dir_path, image_filename)
             image = imageio.imread(img_file_path)
             ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), shape=image.shape)
@@ -261,10 +257,9 @@ class TomatoDatasetTool:
         out.release()
         cv2.destroyAllWindows()
 
-    def inspect_formated_bboxes_from_yolo_parser_pov(self, w=600, h=600):
+    def inspect_formated_bboxes_from_yolo_parser_pov(self, w=600, h=600, set='train'):
         os.makedirs('./data/inspect', exist_ok=True)
-        out = cv2.VideoWriter('./data/output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 3, (600, 600))
-        labels_pointer_opened_file = open("{}/{}.txt".format(self.formated_data_dir_path, 'test'), "r")
+        labels_pointer_opened_file = open("{}/{}.txt".format(self.formated_data_dir_path, set), "r")
         labels_pointer = labels_pointer_opened_file.readlines()
 
         for image_file_path in labels_pointer:
@@ -294,11 +289,6 @@ class TomatoDatasetTool:
                     cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 2)
 
             cv2.imwrite('./data/inspect/' + os.path.basename(image_file_path), image)
-            out.write(image)
-            cv2.imshow('frame', image)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        out.release()
         cv2.destroyAllWindows()
         labels_pointer_opened_file.close()
 
