@@ -89,11 +89,11 @@ class Yolo:
         val_cutoff = round(train_cutoff + self.split[1]*len_data)
 
         sets = [('train', 0, train_cutoff), ('val', train_cutoff, val_cutoff), ('test', val_cutoff, len(self.annotations) + 1)]
+        data_iterator = list(enumerate(self.annotations.keys()))
+        shuffle(data_iterator)
 
         for set, set_start_idx, set_end_idx in sets:
             labels_pointer_opened_file = open("{}/{}.txt".format(formated_data_dir_path, set), "w")
-            data_iterator = list(enumerate(self.annotations.keys()))
-            shuffle(data_iterator)
             for index, image_filename in data_iterator[set_start_idx:set_end_idx]:
                 labels_pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages', image_filename.replace('jpeg', 'jpg')) + '\n')
                 self.create_label_file(formated_data_dir_path, image_filename)
