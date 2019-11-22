@@ -206,15 +206,19 @@ class TomatoDatasetTool:
             if bboxes:
                 img_file_path = os.path.join(self.data_dir_path, image_filename)
                 image = imageio.imread(img_file_path)
+
                 ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), shape=image.shape)
                 aug_img, aug_bboxes = augmentor(image=image, bounding_boxes=ia_boxxes)
-                aug_bboxes.remove_out_of_image()
-                aug_bboxes.clip_out_of_image()
+                aug_bboxes = aug_bboxes.remove_out_of_image()
+                aug_bboxes = aug_bboxes.clip_out_of_image()
+                aug_bboxes = aug_bboxes.to_xyxy_array()
+                if aug_bboxes.size == 0:
+                    continue
+                aug_bboxes = aug_bboxes.tolist()
+
                 aug_img_filename = '{}_aug.jpg'.format(os.path.splitext(image_filename)[0])
                 aug_img_filepath = os.path.join('./data/augmented', aug_img_filename)
                 imageio.imwrite(aug_img_filepath, aug_img)
-                aug_bboxes = aug_bboxes.to_xyxy_array()
-                aug_bboxes = aug_bboxes.tolist()
                 # aug_bboxes = _unnormalize(aug_bboxes)
                 augmented_annotations.setdefault(aug_img_filename, [])
                 for aug_bbox in aug_bboxes:
