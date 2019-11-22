@@ -198,37 +198,34 @@ class TomatoDatasetTool:
                 bbox = triplet["box"]
                 bbox = _normalize_bbox(bbox)
                 bboxes.append(bbox)
-                img_file_path = os.path.join(self.data_dir_path, image_filename)
-                image = imageio.imread(img_file_path)
-                ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), shape=image.shape)
+            img_file_path = os.path.join(self.data_dir_path, image_filename)
+            image = imageio.imread(img_file_path)
+            ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), shape=image.shape)
 
-                for epoch in range(self.upsampling_factor):
-                    aug_img, aug_bboxes = augmentor(image=image, bounding_boxes=ia_boxxes)
-                    aug_bboxes = aug_bboxes.remove_out_of_image()
-                    aug_bboxes = aug_bboxes.clip_out_of_image()
-                    aug_bboxes = aug_bboxes.to_xyxy_array()
-                    if aug_bboxes.size == 0:
-                        continue
-                    aug_bboxes = aug_bboxes.tolist()
+            for epoch in range(self.upsampling_factor):
+                aug_img, aug_bboxes = augmentor(image=image, bounding_boxes=ia_boxxes)
+                aug_bboxes = aug_bboxes.remove_out_of_image()
+                aug_bboxes = aug_bboxes.clip_out_of_image()
+                aug_bboxes = aug_bboxes.to_xyxy_array()
+                if aug_bboxes.size == 0:
+                    continue
+                aug_bboxes = aug_bboxes.tolist()
 
-                    aug_img_filename = '{}_aug_{}.jpg'.format(os.path.splitext(image_filename)[0], epoch)
-                    aug_img_filepath = os.path.join('./data/augmented', aug_img_filename)
-                    imageio.imwrite(aug_img_filepath, aug_img)
-                    augmented_annotations.setdefault(aug_img_filename, [])
-                    for aug_bbox in aug_bboxes:
-                        augmented_annotations[aug_img_filename].append({"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False})
+                aug_img_filename = '{}_aug_{}.jpg'.format(os.path.splitext(image_filename)[0], epoch)
+                aug_img_filepath = os.path.join('./data/augmented', aug_img_filename)
+                imageio.imwrite(aug_img_filepath, aug_img)
+                augmented_annotations.setdefault(aug_img_filename, [])
+                for aug_bbox in aug_bboxes:
+                    augmented_annotations[aug_img_filename].append({"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False})
 
         return augmented_annotations
 
     def inspect_bboxes(self, annotations):
+        os.makedirs('./data/inspect', exist_ok=True)
         out = cv2.VideoWriter('output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 5, (600, 600))
-        i = 0
         for _, img_filename in enumerate(annotations.keys()):
             metadata = annotations[img_filename]
             bboxes = []
-
-            print(metadata)
-
             for triplet in metadata:
                 label = self.mapping[triplet["id"]]
                 if label:
@@ -237,7 +234,6 @@ class TomatoDatasetTool:
 
             if not bboxes:
                 continue
-
             # img_file_path_prefix = self.data_dir_path
             img_file_path_prefix = './data/augmented'
             img_file_path = os.path.join(img_file_path_prefix, img_filename)
@@ -246,41 +242,13 @@ class TomatoDatasetTool:
             for bbox in bboxes:
                 bbox = [int(i) for i in bbox]
                 cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
-            cv2.imwrite('./data/inspect' + img_filename, image)
+            cv2.imwrite('./data/inspect/' + img_filename, image)
             out.write(image)
             cv2.imshow('frame', image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-            i += 1
-            print(i)
         out.release()
         cv2.destroyAllWindows()
-
-    def up_sample_data_draft_debug(self):
-        img_file_path_prefix = self.data_dir_path
-        img_file_path_suffix = list(self.annotations.keys())[10]
-        img_file_path = os.path.join(img_file_path_prefix, img_file_path_suffix)
-        image = imageio.imread(img_file_path)
-        image = ia.imresize_single_image(image, (298, 447))
-
-        bbs = BoundingBoxesOnImage([
-            BoundingBox(x1=0.2 * 447, x2=0.85 * 447, y1=0.3 * 298, y2=0.95 * 298),
-            BoundingBox(x1=0.4 * 447, x2=0.65 * 447, y1=0.1 * 298, y2=0.4 * 298)
-        ], shape=image.shape)
-
-        ia.imshow(bbs.draw_on_image(image, size=2))
-
-        seq = iaa.Sequential([
-            iaa.GammaContrast(1.5),
-            iaa.Affine(translate_percent={"x": 0.1}, scale=0.8)
-        ])
-
-        aug_img, aug_bboxes = seq(image=image, bounding_boxes=bbs)
-
-        print(aug_bboxes)
-        print(aug_img)
-        print(type(aug_bboxes.to_xyxy_array()))
-        print(type(aug_img))
 
 
 if __name__ == "__main__":
