@@ -92,10 +92,15 @@ class Yolo:
         data_iterator = list(enumerate(self.annotations.keys()))
         shuffle(data_iterator)
 
+        self.create_gt_files_for_computing_error_rate(data_iterator, formated_data_dir_path, sets)
+        self.create_label_files(data_iterator, formated_data_dir_path, sets)
+
+    def create_label_files(self, data_iterator, formated_data_dir_path, sets):
         for set, set_start_idx, set_end_idx in sets:
             labels_pointer_opened_file = open("{}/{}.txt".format(formated_data_dir_path, set), "w")
             for index, image_filename in data_iterator[set_start_idx:set_end_idx]:
-                labels_pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages', image_filename.replace('jpeg', 'jpg')) + '\n')
+                labels_pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages',
+                                                              image_filename.replace('jpeg', 'jpg')) + '\n')
                 self.create_label_file(formated_data_dir_path, image_filename)
             labels_pointer_opened_file.close()
 
