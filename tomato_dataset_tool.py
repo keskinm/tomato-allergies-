@@ -14,7 +14,7 @@ import cv2
 
 
 class TomatoDatasetTool:
-    def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path, downsample, upsample, seed):
+    def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path, downsample, upsample, seed, upsampling_epochs):
         self.prepare_data = prepare_data
         self.annotations = self.parse_annotations(data_annotations_file_path)
         self.mapping = self.label_mapping(labels_mapping_file_path)
@@ -22,6 +22,7 @@ class TomatoDatasetTool:
         self.data_dir_path = data_dir_path
         self.downsample = downsample
         self.upsample = upsample
+        self.upsampling_epochs = upsampling_epochs
         random.seed(seed)
         ia.seed(seed)
 
@@ -178,11 +179,11 @@ class TomatoDatasetTool:
         augmented_annotations = {}
 
         augmentor = iaa.SomeOf(2, [
-            # iaa.Affine(scale=(0.5, 1.5)),
-            # iaa.Affine(rotate=(-60, 60)),
-            # iaa.Affine(translate_percent={"x": (-0.3, 0.3), "y": (-0.3, 0.3)}),
-            # iaa.Fliplr(1),
-            # iaa.Multiply((0.5, 1.5)),
+            iaa.Affine(scale=(0.5, 1.5)),
+            iaa.Affine(rotate=(-60, 60)),
+            iaa.Affine(translate_percent={"x": (-0.3, 0.3), "y": (-0.3, 0.3)}),
+            iaa.Fliplr(1),
+            iaa.Multiply((0.5, 1.5)),
             iaa.GaussianBlur(sigma=(1.0, 3.0)),
             iaa.AdditiveGaussianNoise(scale=(0.03*255, 0.05*255))
             ])
@@ -243,7 +244,7 @@ class TomatoDatasetTool:
 
             for bbox in bboxes:
                 bbox = [int(i) for i in bbox]
-                cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[0]+bbox[2], bbox[1]+bbox[3]), (255, 0, 0), 2)
+                cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
 
             out.write(image)
             cv2.imshow('frame', image)
@@ -286,6 +287,7 @@ if __name__ == "__main__":
     parser.add_argument("--prepare-data", action='store_true', help="prepare data")
     parser.add_argument("--downsample", action='store_true', help="downsampling data")
     parser.add_argument("--upsample", action='store_true', help="upsampling data")
+    parser.add_argument("--upsampling-epochs", type=int, default=5, help="Upsampled samples number = Epoch*(nb_of_tomates) (n_tomates=549)")
     parser.add_argument("--data-annotations-file_path", type=str, default="./data/img_annotations.json", help="path to data annotations file")
     parser.add_argument("--labels-mapping-file-path", type=str, default='./data/label_mapping.csv', help="label mapping file")
     parser.add_argument('--split', nargs=3, default=[0.7, 0.15, 0.15], help='time range to pull scenes from')
