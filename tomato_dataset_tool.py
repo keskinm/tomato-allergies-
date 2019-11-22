@@ -79,14 +79,15 @@ class TomatoDatasetTool:
 
     @staticmethod
     def normalize_bbox(bbox, h=600, w=600):
-        bbox[0] = bbox[0] + bbox[2] / 2
-        bbox[1] = bbox[1] + bbox[3] / 2
-
-        bbox[0] /= w
-        bbox[1] /= h
-        bbox[2] /= w
-        bbox[3] /= h
-        return bbox
+        bbox = [float(coord) for coord in bbox]
+        new_bbox = bbox
+        new_bbox[0] = bbox[0] + (bbox[2] / 2.)
+        new_bbox[1] = bbox[1] + (bbox[3] / 2.)
+        new_bbox[0] /= w
+        new_bbox[1] /= h
+        new_bbox[2] /= w
+        new_bbox[3] /= h
+        return new_bbox
 
     def format_data(self):
         self.copytree(self.data_dir_path, os.path.join(self.formated_data_dir_path, 'JPEGImages'))
@@ -153,7 +154,7 @@ class TomatoDatasetTool:
             self.annotations = downsampled_annotations
 
         self.format_data()
-
+        # self.inspect_formated_bboxes_from_yolo_parser_pov()
         # self.inspect_bboxes(augmented_annotations)
 
     def parse_annotations(self, data_annotations_file_path):
@@ -235,7 +236,7 @@ class TomatoDatasetTool:
 
     def inspect_bboxes(self, annotations):
         os.makedirs('./data/inspect', exist_ok=True)
-        out = cv2.VideoWriter('output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 5, (600, 600))
+        out = cv2.VideoWriter('./data/output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 3, (600, 600))
         for _, img_filename in enumerate(annotations.keys()):
             metadata = annotations[img_filename]
             bboxes = []
@@ -244,14 +245,11 @@ class TomatoDatasetTool:
                 if label:
                     bbox = triplet["box"]
                     bboxes.append(bbox)
-
             if not bboxes:
                 continue
-            # img_file_path_prefix = self.data_dir_path
-            img_file_path_prefix = './data/augmented'
+            img_file_path_prefix = os.path.join(self.formated_data_dir_path, 'JPEGImages')
             img_file_path = os.path.join(img_file_path_prefix, img_filename)
             image = cv2.imread(img_file_path)
-
             for bbox in bboxes:
                 bbox = [int(i) for i in bbox]
                 cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
@@ -263,8 +261,46 @@ class TomatoDatasetTool:
         out.release()
         cv2.destroyAllWindows()
 
-    def inspect_formated_bboxes(self):
-        pass
+    def inspect_formated_bboxes_from_yolo_parser_pov(self, w=600, h=600):
+        os.makedirs('./data/inspect', exist_ok=True)
+        out = cv2.VideoWriter('./data/output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 3, (600, 600))
+        labels_pointer_opened_file = open("{}/{}.txt".format(self.formated_data_dir_path, 'test'), "r")
+        labels_pointer = labels_pointer_opened_file.readlines()
+
+        for image_file_path in labels_pointer:
+            image_file_path = image_file_path.rstrip()
+            image = cv2.imread(image_file_path)
+            label_file_path = (image_file_path.replace('JPEGImages', 'labels')).replace('.jpg', '.txt')
+            bboxes = []
+            with open(label_file_path, mode='r') as opened_label_file:
+                labels = opened_label_file.readlines()
+                if labels:
+                    for line in labels:
+                        bboxes.append(line[1:])
+            if bboxes:
+                for bbox in bboxes:
+                    bbox = bbox.rstrip()
+                    bbox = bbox.split(' ')[1:]
+                    bbox = [float(coord) for coord in bbox]
+                    bbox[0] *= w
+                    bbox[1] *= h
+                    bbox[2] *= w
+                    bbox[3] *= h
+
+                    x1 = bbox[0] - (bbox[2] / 2)
+                    y1 = bbox[1] - (bbox[3] / 2)
+                    x2 = bbox[0] + (bbox[2] / 2)
+                    y2 = bbox[1] + (bbox[3] / 2)
+                    cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 2)
+
+            cv2.imwrite('./data/inspect/' + os.path.basename(image_file_path), image)
+            out.write(image)
+            cv2.imshow('frame', image)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        out.release()
+        cv2.destroyAllWindows()
+        labels_pointer_opened_file.close()
 
 
 if __name__ == "__main__":
