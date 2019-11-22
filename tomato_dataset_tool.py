@@ -174,6 +174,12 @@ class TomatoDatasetTool:
             new_bbox[3] = bbox[1] + bbox[3]
             return new_bbox
 
+        def reverse_ia_format_bbox(bbox):
+            new_bbox = bbox
+            new_bbox[2] = bbox[2] - bbox[0]
+            new_bbox[3] = bbox[3] - bbox[1]
+            return new_bbox
+
         os.makedirs('./data/augmented', exist_ok=True)
 
         augmented_annotations = {}
@@ -210,6 +216,7 @@ class TomatoDatasetTool:
                 if aug_bboxes.size == 0:
                     continue
                 aug_bboxes = aug_bboxes.tolist()
+                aug_bboxes = [reverse_ia_format_bbox(aug_bbox) for aug_bbox in aug_bboxes]
 
                 aug_img_filename = '{}_aug_{}.jpg'.format(os.path.splitext(image_filename)[0], epoch)
                 aug_img_filepath = os.path.join('./data/augmented', aug_img_filename)
