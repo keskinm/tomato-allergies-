@@ -108,11 +108,13 @@ class Yolo:
         for set, set_start_idx, set_end_idx in sets:
             gt_opened_file = open("{}/{}_gt.txt".format(formated_data_dir_path, set), "w")
             for index, image_filename in data_iterator[set_start_idx:set_end_idx]:
+                tomatoes = []
                 metadata = self.annotations[image_filename]
                 for triplet in metadata:
-                    label = self.mapping[triplet["id"]]
-                gt_opened_file.write(str(label) + '\n')
-                self.create_label_file(formated_data_dir_path, image_filename)
+                    tomato = self.mapping[triplet["id"]]
+                    if tomato:
+                        tomatoes.append(tomato)
+                gt_opened_file.write(str(bool(tomatoes)) + '\n')
             gt_opened_file.close()
 
     def create_label_file(self, formated_data_dir_path, image_filename):
