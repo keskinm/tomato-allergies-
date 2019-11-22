@@ -142,7 +142,8 @@ class TomatoDatasetTool:
         label_opened_file.close()
 
     def run(self):
-        self.up_sample_data()
+        augmented_annotations = self.up_sample_data()
+        self.inspect_bboxes(augmented_annotations)
         # if self.prepare_data:
         #     if self.downsample:
         #         self.down_sample_data()
@@ -200,7 +201,7 @@ class TomatoDatasetTool:
                 label = self.mapping[triplet["id"]]
                 if label:
                     bbox = triplet["box"]
-                    bbox = _normalize_bbox(bbox)
+                    # bbox = _normalize_bbox(bbox)
                     bboxes.append(bbox)
             if bboxes:
                 img_file_path = os.path.join(self.data_dir_path, image_filename)
@@ -214,16 +215,19 @@ class TomatoDatasetTool:
                 imageio.imwrite(aug_img_filepath, aug_img)
                 aug_bboxes = aug_bboxes.to_xyxy_array()
                 aug_bboxes = aug_bboxes.tolist()
-                aug_bboxes = _unnormalize(aug_bboxes)
+                # aug_bboxes = _unnormalize(aug_bboxes)
+                augmented_annotations.setdefault(aug_img_filename, [])
                 for aug_bbox in aug_bboxes:
-                    augmented_annotations.setdefault(aug_img_filename, [{"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False}])
+                    augmented_annotations[aug_img_filename].append({"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False})
 
-    def inspect_bboxes(self):
+        return augmented_annotations
+
+    def inspect_bboxes(self, annotations):
         out = cv2.VideoWriter('output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 5, (600, 600))
         i = 0
-        for _, img_filename in enumerate(self.annotations.keys()):
-            metadata = self.annotations[img_filename]
-            i+=1
+        for _, img_filename in enumerate(annotations.keys()):
+            metadata = annotations[img_filename]
+            i += 1
             bboxes = []
             for triplet in metadata:
                 label = self.mapping[triplet["id"]]
