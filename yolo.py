@@ -26,12 +26,16 @@ class Yolo:
         ia.seed(seed)
 
     def compute_class_numbers(self):
-        no_tomatoes = 0
+        tomatoes_count = 0
         for _, img_filename in enumerate(self.annotations.keys()):
             metadata = self.annotations[img_filename]
-            if not(self.mapping[metadata[0]['id']]):
-                no_tomatoes += 1
-        return no_tomatoes, (len(self.annotations) - no_tomatoes)
+
+            for triplet in metadata:
+                tomato = self.mapping[triplet["id"]]
+                if tomato:
+                    tomatoes_count += 1
+                    break
+        return (len(self.annotations) - tomatoes_count), tomatoes_count
 
     def down_sample_data(self, keep_negative_rate=0.05, keep_positive_rate=1.):
         down_sampled_dataset = {}
@@ -42,12 +46,19 @@ class Yolo:
         tomatoes_count = 0
         for _, img_fname in enumerate(self.annotations.keys()):
             metadata = self.annotations[img_fname]
-            if self.mapping[metadata[0]['id']] and tomatoes_count < keep_positive_n:
-                down_sampled_dataset.setdefault(img_fname, metadata)
-                tomatoes_count += 1
-            elif not(self.mapping[metadata[0]['id']]) and no_tomatoes_count < keep_negative_n:
-                down_sampled_dataset.setdefault(img_fname, metadata)
-                no_tomatoes_count += 1
+
+            for triplet in metadata:
+                tomato = self.mapping[triplet["id"]]
+                if tomato:
+                    if tomatoes_count < keep_positive_n:
+                        down_sampled_dataset.setdefault(img_fname, metadata)
+                        tomatoes_count += 1
+                    break
+
+            else:
+                if no_tomatoes_count < keep_negative_n:
+                    down_sampled_dataset.setdefault(img_fname, metadata)
+                    no_tomatoes_count += 1
         self.annotations = down_sampled_dataset
 
     @staticmethod
@@ -85,15 +96,33 @@ class Yolo:
         val_cutoff = round(train_cutoff + self.split[1]*len_data)
 
         sets = [('train', 0, train_cutoff), ('val', train_cutoff, val_cutoff), ('test', val_cutoff, len(self.annotations) + 1)]
+        data_iterator = list(enumerate(self.annotations.keys()))
+        shuffle(data_iterator)
 
+        self.create_gt_files_for_computing_error_rate(data_iterator, formated_data_dir_path, sets)
+        self.create_label_files(data_iterator, formated_data_dir_path, sets)
+
+    def create_label_files(self, data_iterator, formated_data_dir_path, sets):
         for set, set_start_idx, set_end_idx in sets:
             labels_pointer_opened_file = open("{}/{}.txt".format(formated_data_dir_path, set), "w")
-            data_iterator = list(enumerate(self.annotations.keys()))
-            shuffle(data_iterator)
             for index, image_filename in data_iterator[set_start_idx:set_end_idx]:
-                labels_pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages', image_filename.replace('jpeg', 'jpg')) + '\n')
+                labels_pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages',
+                                                              image_filename.replace('jpeg', 'jpg')) + '\n')
                 self.create_label_file(formated_data_dir_path, image_filename)
             labels_pointer_opened_file.close()
+
+    def create_gt_files_for_computing_error_rate(self, data_iterator, formated_data_dir_path, sets):
+        for set, set_start_idx, set_end_idx in sets:
+            gt_opened_file = open("{}/{}_gt.txt".format(formated_data_dir_path, set), "w")
+            for index, image_filename in data_iterator[set_start_idx:set_end_idx]:
+                tomatoes = []
+                metadata = self.annotations[image_filename]
+                for triplet in metadata:
+                    tomato = self.mapping[triplet["id"]]
+                    if tomato:
+                        tomatoes.append(tomato)
+                gt_opened_file.write(str(bool(tomatoes)) + '\n')
+            gt_opened_file.close()
 
     def create_label_file(self, formated_data_dir_path, image_filename):
         metadata = self.annotations[image_filename]
