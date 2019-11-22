@@ -14,7 +14,7 @@ import cv2
 
 
 class TomatoDatasetTool:
-    def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path, downsample, upsample, seed, upsampling_epochs):
+    def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path, downsample, upsample, seed, upsampling_factor):
         self.prepare_data = prepare_data
         self.annotations = self.parse_annotations(data_annotations_file_path)
         self.mapping = self.label_mapping(labels_mapping_file_path)
@@ -22,7 +22,7 @@ class TomatoDatasetTool:
         self.data_dir_path = data_dir_path
         self.downsample = downsample
         self.upsample = upsample
-        self.upsampling_epochs = upsampling_epochs
+        self.upsampling_factor = upsampling_factor
         random.seed(seed)
         ia.seed(seed)
 
@@ -201,22 +201,23 @@ class TomatoDatasetTool:
             if bboxes:
                 img_file_path = os.path.join(self.data_dir_path, image_filename)
                 image = imageio.imread(img_file_path)
-
                 ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), shape=image.shape)
-                aug_img, aug_bboxes = augmentor(image=image, bounding_boxes=ia_boxxes)
-                aug_bboxes = aug_bboxes.remove_out_of_image()
-                aug_bboxes = aug_bboxes.clip_out_of_image()
-                aug_bboxes = aug_bboxes.to_xyxy_array()
-                if aug_bboxes.size == 0:
-                    continue
-                aug_bboxes = aug_bboxes.tolist()
 
-                aug_img_filename = '{}_aug.jpg'.format(os.path.splitext(image_filename)[0])
-                aug_img_filepath = os.path.join('./data/augmented', aug_img_filename)
-                imageio.imwrite(aug_img_filepath, aug_img)
-                augmented_annotations.setdefault(aug_img_filename, [])
-                for aug_bbox in aug_bboxes:
-                    augmented_annotations[aug_img_filename].append({"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False})
+                for epoch in range(self.upsampling_factor):
+                    aug_img, aug_bboxes = augmentor(image=image, bounding_boxes=ia_boxxes)
+                    aug_bboxes = aug_bboxes.remove_out_of_image()
+                    aug_bboxes = aug_bboxes.clip_out_of_image()
+                    aug_bboxes = aug_bboxes.to_xyxy_array()
+                    if aug_bboxes.size == 0:
+                        continue
+                    aug_bboxes = aug_bboxes.tolist()
+
+                    aug_img_filename = '{}_aug_{}.jpg'.format(os.path.splitext(image_filename)[0], epoch)
+                    aug_img_filepath = os.path.join('./data/augmented', aug_img_filename)
+                    imageio.imwrite(aug_img_filepath, aug_img)
+                    augmented_annotations.setdefault(aug_img_filename, [])
+                    for aug_bbox in aug_bboxes:
+                        augmented_annotations[aug_img_filename].append({"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False})
 
         return augmented_annotations
 
@@ -246,7 +247,7 @@ class TomatoDatasetTool:
             for bbox in bboxes:
                 bbox = [int(i) for i in bbox]
                 cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
-
+            cv2.imwrite('./data/inspect' + img_filename, image)
             out.write(image)
             cv2.imshow('frame', image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -288,7 +289,7 @@ if __name__ == "__main__":
     parser.add_argument("--prepare-data", action='store_true', help="prepare data")
     parser.add_argument("--downsample", action='store_true', help="downsampling data")
     parser.add_argument("--upsample", action='store_true', help="upsampling data")
-    parser.add_argument("--upsampling-epochs", type=int, default=5, help="Upsampled samples number = Epoch*(nb_of_tomates) (n_tomates=549)")
+    parser.add_argument("--upsampling-factor", type=int, default=5, help="Upsampled samples number = upsampling_factor*(nb_of_tomates) (n_tomates=549)")
     parser.add_argument("--data-annotations-file_path", type=str, default="./data/img_annotations.json", help="path to data annotations file")
     parser.add_argument("--labels-mapping-file-path", type=str, default='./data/label_mapping.csv', help="label mapping file")
     parser.add_argument('--split', nargs=3, default=[0.7, 0.15, 0.15], help='time range to pull scenes from')
