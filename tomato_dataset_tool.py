@@ -94,7 +94,8 @@ class TomatoDatasetTool:
         train_cutoff = round(self.split[0]*len_data)
         val_cutoff = round(train_cutoff + self.split[1]*len_data)
 
-        sets = [('train', 0, train_cutoff), ('val', train_cutoff, val_cutoff), ('test', val_cutoff, len(self.annotations) + 1)]
+        sets = [('train', 0, train_cutoff), ('val', train_cutoff, val_cutoff), ('test', val_cutoff,
+                                                                                len(self.annotations) + 1)]
         data_iterator = list(enumerate(self.annotations.keys()))
         shuffle(data_iterator)
 
@@ -226,7 +227,9 @@ class TomatoDatasetTool:
                 imageio.imwrite(aug_img_filepath, aug_img)
                 augmented_annotations.setdefault(aug_img_filename, [])
                 for aug_bbox in aug_bboxes:
-                    augmented_annotations[aug_img_filename].append({"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False})
+                    augmented_annotations[aug_img_filename].append({"box": aug_bbox,
+                                                                    "id": "9f2c42629209f86b2d5fbe152eb54803_lab",
+                                                                    "is_background": False})
 
         return augmented_annotations
 
@@ -269,12 +272,31 @@ if __name__ == "__main__":
     parser.add_argument("--prepare-data", action='store_true', help="prepare data")
     parser.add_argument("--downsample", action='store_true', help="downsampling data")
     parser.add_argument("--upsample", action='store_true', help="upsampling data")
-    parser.add_argument("--upsampling-factor", type=int, default=5, help="Upsampled samples number = upsampling_factor*(nb_of_tomates) (n_tomates=549)")
-    parser.add_argument("--data-annotations-file_path", type=str, default="./data/img_annotations.json", help="path to data annotations file")
-    parser.add_argument("--labels-mapping-file-path", type=str, default='./data/label_mapping.csv', help="label mapping file")
-    parser.add_argument('--split', nargs=3, default=[0.7, 0.15, 0.15], help='time range to pull scenes from')
-    parser.add_argument('--data-dir-path', type=str, default='./data/assignment_imgs', help='path to the directory containing images')
-    parser.add_argument('--seed', type=int, default=43, help='random seed')
+    parser.add_argument("--upsampling-factor",
+                        type=int,
+                        default=5,
+                        help="upsampling_factor*(nb_of_tomates)*(1-eps)<= Upsampled samples number <= "
+                             "upsampling_factor*(nb_of_tomates) (n_tomates=549)")
+    parser.add_argument("--data-annotations-file_path",
+                        type=str,
+                        default="./data/img_annotations.json",
+                        help="path to data annotations file")
+    parser.add_argument("--labels-mapping-file-path",
+                        type=str,
+                        default='./data/label_mapping.csv',
+                        help="label mapping file")
+    parser.add_argument('--split',
+                        nargs=3,
+                        default=[0.7, 0.15, 0.15],
+                        help='time range to pull scenes from')
+    parser.add_argument('--data-dir-path',
+                        type=str,
+                        default='./data/assignment_imgs',
+                        help='path to the directory containing images')
+    parser.add_argument('--seed',
+                        type=int,
+                        default=43,
+                        help='random seed')
     args = parser.parse_args()
     args = vars(args)
     tomato_dataset_tool = TomatoDatasetTool(**args)
