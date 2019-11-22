@@ -142,12 +142,12 @@ class TomatoDatasetTool:
         label_opened_file.close()
 
     def run(self):
-        # self.up_sample_data()
+        self.up_sample_data()
         # if self.prepare_data:
         #     if self.downsample:
         #         self.down_sample_data()
         #     self._prepare_data()
-        self.inspect_bboxes()
+        # self.inspect_bboxes()
 
     def parse_annotations(self, data_annotations_file_path):
         with open(data_annotations_file_path) as json_file:
@@ -205,13 +205,13 @@ class TomatoDatasetTool:
             if bboxes:
                 img_file_path = os.path.join(self.data_dir_path, image_filename)
                 image = imageio.imread(img_file_path)
-                image = ia.imresize_single_image(image, (298, 447))
                 ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), shape=image.shape)
                 aug_img, aug_bboxes = augmentor(image=image, bounding_boxes=ia_boxxes)
                 aug_bboxes.remove_out_of_image()
                 aug_bboxes.clip_out_of_image()
                 aug_img_filename = '{}_aug.jpg'.format(os.path.splitext(image_filename)[0])
-                imageio.imwrite('./data/augmented' + aug_img_filename, aug_img)
+                aug_img_filepath = os.path.join('./data/augmented', aug_img_filename)
+                imageio.imwrite(aug_img_filepath, aug_img)
                 aug_bboxes = aug_bboxes.to_xyxy_array()
                 aug_bboxes = aug_bboxes.tolist()
                 aug_bboxes = _unnormalize(aug_bboxes)
