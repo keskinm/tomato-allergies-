@@ -7,14 +7,15 @@ import random
 from random import shuffle
 import imageio
 import imgaug as ia
-from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
+from imgaug.augmentables.bbs import BoundingBoxesOnImage
 from imgaug import augmenters as iaa
 import numpy as np
 import cv2
 
 
 class TomatoDatasetTool:
-    def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path, downsample, upsample, seed, upsampling_factor):
+    def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path,
+                 downsample, upsample, seed, upsampling_factor):
         self.prepare_data = prepare_data
         self.annotations = self.parse_annotations(data_annotations_file_path)
         self.mapping = self.label_mapping(labels_mapping_file_path)
@@ -23,8 +24,12 @@ class TomatoDatasetTool:
         self.downsample = downsample
         self.upsample = upsample
         self.upsampling_factor = upsampling_factor
+        self.formated_data_dir_path = './data/formated'
         random.seed(seed)
         ia.seed(seed)
+        os.makedirs(self.formated_data_dir_path, exist_ok=True)
+        os.makedirs(os.path.join(self.formated_data_dir_path, 'JPEGImages'), exist_ok=True)
+        os.makedirs(os.path.join(self.formated_data_dir_path, 'labels'), exist_ok=True)
 
     def positive_annotations(self):
         positive_annotations = {}
@@ -59,7 +64,7 @@ class TomatoDatasetTool:
                 if no_tomatoes_count < keep_negative_n:
                     down_sampled_dataset.setdefault(img_fname, metadata)
                     no_tomatoes_count += 1
-        self.annotations = down_sampled_dataset
+        return down_sampled_dataset
 
     @staticmethod
     def copytree(src, dst, symlinks=False, ignore=None):
@@ -83,14 +88,8 @@ class TomatoDatasetTool:
         bbox[3] /= h
         return bbox
 
-    def _prepare_data(self):
-        data_dir_path = self.data_dir_path
-        formated_data_dir_path = './data/formated'
-        os.makedirs(formated_data_dir_path, exist_ok=True)
-        os.makedirs(os.path.join(formated_data_dir_path, 'JPEGImages'), exist_ok=True)
-        os.makedirs(os.path.join(formated_data_dir_path, 'labels'), exist_ok=True)
-        self.copytree(data_dir_path, os.path.join(formated_data_dir_path, 'JPEGImages'))
-
+    def format_data(self):
+        self.copytree(self.data_dir_path, os.path.join(self.formated_data_dir_path, 'JPEGImages'))
         len_data = len(self.annotations)
         train_cutoff = round(self.split[0]*len_data)
         val_cutoff = round(train_cutoff + self.split[1]*len_data)
@@ -99,13 +98,14 @@ class TomatoDatasetTool:
         data_iterator = list(enumerate(self.annotations.keys()))
         shuffle(data_iterator)
 
-        self.create_gt_files_for_computing_error_rate(data_iterator, formated_data_dir_path, sets)
-        self.create_label_files(data_iterator, formated_data_dir_path, sets)
+        self.create_gt_files_for_computing_error_rate(data_iterator, self.formated_data_dir_path, sets)
+        self.create_label_files(data_iterator, self.formated_data_dir_path, sets)
 
     def create_label_files(self, data_iterator, formated_data_dir_path, sets):
         for set, set_start_idx, set_end_idx in sets:
             labels_pointer_opened_file = open("{}/{}.txt".format(formated_data_dir_path, set), "w")
             for index, image_filename in data_iterator[set_start_idx:set_end_idx]:
+
                 labels_pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages',
                                                               image_filename.replace('jpeg', 'jpg')) + '\n')
                 self.create_label_file(formated_data_dir_path, image_filename)
@@ -142,13 +142,18 @@ class TomatoDatasetTool:
         label_opened_file.close()
 
     def run(self):
-        augmented_annotations = self.up_sample_data()
-        self.inspect_bboxes(augmented_annotations)
-        # if self.prepare_data:
-        #     if self.downsample:
-        #         self.down_sample_data()
-        #     self._prepare_data()
-        # self.inspect_bboxes()
+        if self.upsample and self.downsample:
+            raise ValueError('Cannot upsample and downsample at same time')
+        elif self.upsample:
+            augmented_annotations = self.up_sample_data()
+            self.annotations = {**self.annotations, **augmented_annotations}
+        elif self.downsample:
+            downsampled_annotations = self.down_sample_data()
+            self.annotations = downsampled_annotations
+
+        self.format_data()
+
+        # self.inspect_bboxes(augmented_annotations)
 
     def parse_annotations(self, data_annotations_file_path):
         with open(data_annotations_file_path) as json_file:
@@ -179,8 +184,6 @@ class TomatoDatasetTool:
             new_bbox[2] = bbox[2] - bbox[0]
             new_bbox[3] = bbox[3] - bbox[1]
             return new_bbox
-
-        os.makedirs('./data/augmented', exist_ok=True)
 
         augmented_annotations = {}
 
@@ -219,7 +222,7 @@ class TomatoDatasetTool:
                 aug_bboxes = [reverse_ia_format_bbox(aug_bbox) for aug_bbox in aug_bboxes]
 
                 aug_img_filename = '{}_aug_{}.jpg'.format(os.path.splitext(image_filename)[0], epoch)
-                aug_img_filepath = os.path.join('./data/augmented', aug_img_filename)
+                aug_img_filepath = os.path.join(self.formated_data_dir_path, 'JPEGImages', aug_img_filename)
                 imageio.imwrite(aug_img_filepath, aug_img)
                 augmented_annotations.setdefault(aug_img_filename, [])
                 for aug_bbox in aug_bboxes:
@@ -256,6 +259,9 @@ class TomatoDatasetTool:
                 break
         out.release()
         cv2.destroyAllWindows()
+
+    def inspect_formated_bboxes(self):
+        pass
 
 
 if __name__ == "__main__":
