@@ -33,7 +33,7 @@ class TomatoDatasetTool:
             for triplet in metadata:
                 tomato = self.mapping[triplet["id"]]
                 if tomato:
-                    positive_annotations.setdefault(img_filename, []).append(metadata)
+                    positive_annotations.setdefault(img_filename, []).append(triplet)
         return positive_annotations
 
     def down_sample_data(self, keep_negative_rate=0.05, keep_positive_rate=1.):
@@ -188,16 +188,16 @@ class TomatoDatasetTool:
             iaa.AdditiveGaussianNoise(scale=(0.03*255, 0.05*255))
             ])
 
-        for _, image_filename in enumerate(self.annotations.keys()):
-            metadata = self.annotations[image_filename]
+        positive_annotations = self.positive_annotations()
+        for _, image_filename in enumerate(positive_annotations.keys()):
+            metadata = positive_annotations[image_filename]
             bboxes = []
             for triplet in metadata:
-                label = self.mapping[triplet["id"]]
-                if label:
-                    bbox = triplet["box"]
-                    bbox = _normalize_bbox(bbox)
-                    bboxes.append(bbox)
-            if bboxes:
+                tomato = self.mapping[triplet["id"]]
+                assert tomato
+                bbox = triplet["box"]
+                bbox = _normalize_bbox(bbox)
+                bboxes.append(bbox)
                 img_file_path = os.path.join(self.data_dir_path, image_filename)
                 image = imageio.imread(img_file_path)
                 ia_boxxes = BoundingBoxesOnImage.from_xyxy_array(np.array(bboxes), shape=image.shape)
