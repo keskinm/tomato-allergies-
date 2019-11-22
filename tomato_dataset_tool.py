@@ -168,16 +168,9 @@ class TomatoDatasetTool:
         return labels
 
     def up_sample_data(self):
-        def _normalize_bbox(bbox, h=600, w=600):
+        def _normalize_bbox(bbox):
             bbox[2] = bbox[0] + bbox[2]
             bbox[3] = bbox[1] + bbox[3]
-            bbox[0] /= w
-            bbox[1] /= h
-            bbox[2] /= w
-            bbox[3] /= h
-            return bbox
-
-        def _unnormalize(bbox, h=600, w=600):
             return bbox
 
         os.makedirs('./data/augmented', exist_ok=True)
@@ -185,11 +178,11 @@ class TomatoDatasetTool:
         augmented_annotations = {}
 
         augmentor = iaa.SomeOf(2, [
-            iaa.Affine(scale=(0.5, 1.5)),
-            iaa.Affine(rotate=(-60, 60)),
-            iaa.Affine(translate_percent={"x": (-0.3, 0.3), "y": (-0.3, 0.3)}),
-            iaa.Fliplr(1),
-            iaa.Multiply((0.5, 1.5)),
+            # iaa.Affine(scale=(0.5, 1.5)),
+            # iaa.Affine(rotate=(-60, 60)),
+            # iaa.Affine(translate_percent={"x": (-0.3, 0.3), "y": (-0.3, 0.3)}),
+            # iaa.Fliplr(1),
+            # iaa.Multiply((0.5, 1.5)),
             iaa.GaussianBlur(sigma=(1.0, 3.0)),
             iaa.AdditiveGaussianNoise(scale=(0.03*255, 0.05*255))
             ])
@@ -201,7 +194,7 @@ class TomatoDatasetTool:
                 label = self.mapping[triplet["id"]]
                 if label:
                     bbox = triplet["box"]
-                    # bbox = _normalize_bbox(bbox)
+                    bbox = _normalize_bbox(bbox)
                     bboxes.append(bbox)
             if bboxes:
                 img_file_path = os.path.join(self.data_dir_path, image_filename)
@@ -219,7 +212,6 @@ class TomatoDatasetTool:
                 aug_img_filename = '{}_aug.jpg'.format(os.path.splitext(image_filename)[0])
                 aug_img_filepath = os.path.join('./data/augmented', aug_img_filename)
                 imageio.imwrite(aug_img_filepath, aug_img)
-                # aug_bboxes = _unnormalize(aug_bboxes)
                 augmented_annotations.setdefault(aug_img_filename, [])
                 for aug_bbox in aug_bboxes:
                     augmented_annotations[aug_img_filename].append({"box": aug_bbox, "id":"9f2c42629209f86b2d5fbe152eb54803_lab", "is_background": False})
@@ -231,25 +223,33 @@ class TomatoDatasetTool:
         i = 0
         for _, img_filename in enumerate(annotations.keys()):
             metadata = annotations[img_filename]
-            i += 1
             bboxes = []
+
+            print(metadata)
+
             for triplet in metadata:
                 label = self.mapping[triplet["id"]]
                 if label:
                     bbox = triplet["box"]
                     bboxes.append(bbox)
 
-            img_file_path_prefix = self.data_dir_path
+            if not bboxes:
+                continue
+
+            # img_file_path_prefix = self.data_dir_path
+            img_file_path_prefix = './data/augmented'
             img_file_path = os.path.join(img_file_path_prefix, img_filename)
             image = cv2.imread(img_file_path)
 
             for bbox in bboxes:
+                bbox = [int(i) for i in bbox]
                 cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[0]+bbox[2], bbox[1]+bbox[3]), (255, 0, 0), 2)
 
             out.write(image)
             cv2.imshow('frame', image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+            i += 1
             print(i)
         out.release()
         cv2.destroyAllWindows()
