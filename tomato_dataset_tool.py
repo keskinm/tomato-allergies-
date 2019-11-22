@@ -170,9 +170,10 @@ class TomatoDatasetTool:
 
     def up_sample_data(self):
         def _normalize_bbox(bbox):
-            bbox[2] = bbox[0] + bbox[2]
-            bbox[3] = bbox[1] + bbox[3]
-            return bbox
+            new_bbox = bbox
+            new_bbox[2] = bbox[0] + bbox[2]
+            new_bbox[3] = bbox[1] + bbox[3]
+            return new_bbox
 
         os.makedirs('./data/augmented', exist_ok=True)
 
