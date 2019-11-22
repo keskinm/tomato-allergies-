@@ -168,7 +168,7 @@ class TomatoDatasetTool:
         return labels
 
     def up_sample_data(self):
-        def _normalize_bbox(bbox):
+        def ia_format_bbox(bbox):
             new_bbox = bbox
             new_bbox[2] = bbox[0] + bbox[2]
             new_bbox[3] = bbox[1] + bbox[3]
@@ -196,7 +196,7 @@ class TomatoDatasetTool:
                 tomato = self.mapping[triplet["id"]]
                 assert tomato
                 bbox = triplet["box"]
-                bbox = _normalize_bbox(bbox)
+                bbox = ia_format_bbox(bbox)
                 bboxes.append(bbox)
             img_file_path = os.path.join(self.data_dir_path, image_filename)
             image = imageio.imread(img_file_path)
