@@ -13,7 +13,7 @@ import numpy as np
 import cv2
 
 
-class Yolo:
+class TomatoDatasetTool:
     def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path, downsample, upsample, seed):
         self.prepare_data = prepare_data
         self.annotations = self.parse_annotations(data_annotations_file_path)
@@ -285,5 +285,5 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=43, help='random seed')
     args = parser.parse_args()
     args = vars(args)
-    yolo = Yolo(**args)
-    yolo.run()
+    tomato_dataset_tool = TomatoDatasetTool(**args)
+    tomato_dataset_tool.run()
