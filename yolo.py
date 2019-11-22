@@ -19,12 +19,16 @@ class Yolo:
         random.seed(seed)
 
     def compute_class_numbers(self):
-        no_tomatoes = 0
+        tomatoes_count = 0
         for _, img_filename in enumerate(self.annotations.keys()):
             metadata = self.annotations[img_filename]
-            if not(self.mapping[metadata[0]['id']]):
-                no_tomatoes += 1
-        return no_tomatoes, (len(self.annotations) - no_tomatoes)
+
+            for triplet in metadata:
+                tomato = self.mapping[triplet["id"]]
+                if tomato:
+                    tomatoes_count += 1
+                    break
+        return (len(self.annotations) - tomatoes_count), tomatoes_count
 
     def down_sample_data(self, keep_negative_rate=0.05, keep_positive_rate=1.):
         down_sampled_dataset = {}
@@ -35,12 +39,19 @@ class Yolo:
         tomatoes_count = 0
         for _, img_fname in enumerate(self.annotations.keys()):
             metadata = self.annotations[img_fname]
-            if self.mapping[metadata[0]['id']] and tomatoes_count < keep_positive_n:
-                down_sampled_dataset.setdefault(img_fname, metadata)
-                tomatoes_count += 1
-            elif not(self.mapping[metadata[0]['id']]) and no_tomatoes_count < keep_negative_n:
-                down_sampled_dataset.setdefault(img_fname, metadata)
-                no_tomatoes_count += 1
+
+            for triplet in metadata:
+                tomato = self.mapping[triplet["id"]]
+                if tomato:
+                    if tomatoes_count < keep_positive_n:
+                        down_sampled_dataset.setdefault(img_fname, metadata)
+                        tomatoes_count += 1
+                    break
+
+            else:
+                if no_tomatoes_count < keep_negative_n:
+                    down_sampled_dataset.setdefault(img_fname, metadata)
+                    no_tomatoes_count += 1
         self.annotations = down_sampled_dataset
 
     @staticmethod
