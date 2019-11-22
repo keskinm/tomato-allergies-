@@ -127,8 +127,6 @@ class TomatoDatasetTool:
             gt_opened_file.close()
 
     def create_label_file(self, formated_data_dir_path, image_filename):
-        print(image_filename)
-
         metadata = self.annotations[image_filename]
         labels = []
         for triplet in metadata:
