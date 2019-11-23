@@ -16,7 +16,7 @@ def create_sets_pointer_file():
     sets_pointer_opened_file.close()
 
 
-def main(install, train, test, ckpts_file_path):
+def main(install, train, test, ckpts_file_path, detection_threshold):
     darknet_dir = './darknet-master'
 
     if install:
@@ -46,8 +46,9 @@ def main(install, train, test, ckpts_file_path):
             test_pointer_file_path = '{}/data/formated/test.txt'.format(os.getcwd())
             test_gt_file_path = '{}/data/formated/test_gt.txt'.format(os.getcwd())
             command = './darknet detector test cfg/tomato.data cfg/tomato.cfg {ckpts_file_path} -dont_show ' \
-                      '-ext_output < {test_set} > preds.txt'.format(ckpts_file_path=ckpts_file_path,
-                                                                    test_set=test_pointer_file_path)
+                      '-ext_output < {test_set} > preds.txt -thresh {th}'.format(ckpts_file_path=ckpts_file_path,
+                                                                    test_set=test_pointer_file_path,
+                                                                    th=detection_threshold)
             subprocess.run(command, check=False, shell=True, cwd=darknet_dir)
             compute_metrics('preds.txt', test_gt_file_path)
 
@@ -57,6 +58,8 @@ if __name__ == "__main__":
     parser.add_argument("--install", action='store_true', help="prepare data")
     parser.add_argument("--train", action='store_true', help="train on train set, compute map on valid set")
     parser.add_argument("--test", action='store_true', help="test on test set")
+    parser.add_argument("--detection-threshold", type=float, default='0.05', help="detection threshold to considere "
+                                                                                  "there is an object")
     parser.add_argument("--chkpts-file-path", type=str, default='', help="path to ckpts for train/test (relative to "
                                                                          "darknet master dir)")
 
