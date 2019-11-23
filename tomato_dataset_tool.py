@@ -30,10 +30,33 @@ class TomatoDatasetTool:
         os.makedirs(self.formated_data_dir_path, exist_ok=True)
         os.makedirs(os.path.join(self.formated_data_dir_path, 'JPEGImages'), exist_ok=True)
         os.makedirs(os.path.join(self.formated_data_dir_path, 'labels'), exist_ok=True)
+        self.train_annotations, self.val_annotations, self.test_annotations = self.split_dataset()
+
+    def split_dataset(self):
+        train_set = {}
+        val_set = {}
+        test_set = {}
+
+        len_data = len(self.annotations)
+        train_cutoff = round(self.split[0] * len_data)
+        val_cutoff = round(train_cutoff + self.split[1] * len_data)
+
+        sets = [('train', 0, train_cutoff, train_set), ('val', train_cutoff, val_cutoff, val_set), ('test', val_cutoff,
+                                                                                len(self.annotations) + 1, test_set)]
+
+        data_iterator = list(enumerate(self.annotations.keys()))
+        random.shuffle(data_iterator)
+
+        for set_label, set_start_idx, set_end_idx, set in sets:
+            for index, image_filename in data_iterator[set_start_idx:set_end_idx]:
+                metadata = self.annotations[image_filename]
+                set.setdefault(image_filename, metadata)
+
+        return train_set, val_set, test_set
 
     def positive_annotations(self):
         positive_annotations = {}
-        for _, img_filename in enumerate(self.annotations.keys()):
+        for _, img_filename in enumerate(self.train_annotations.keys()):
             metadata = self.annotations[img_filename]
             for triplet in metadata:
                 tomato = self.mapping[triplet["id"]]
@@ -44,12 +67,12 @@ class TomatoDatasetTool:
     def down_sample_data(self, keep_negative_rate=0.05, keep_positive_rate=1.):
         down_sampled_dataset = {}
         total_positives = len(self.positive_annotations())
-        total_negatives = 1 - total_positives
+        total_negatives = len(self.train_annotations) - total_positives
 
         keep_negative_n, keep_positive_n = total_negatives*keep_negative_rate, total_positives*keep_positive_rate
         no_tomatoes_count = 0
         tomatoes_count = 0
-        for _, img_fname in enumerate(self.annotations.keys()):
+        for _, img_fname in enumerate(self.train_annotations.keys()):
             metadata = self.annotations[img_fname]
 
             for triplet in metadata:
@@ -91,43 +114,35 @@ class TomatoDatasetTool:
 
     def format_data(self):
         self.copytree(self.data_dir_path, os.path.join(self.formated_data_dir_path, 'JPEGImages'))
-        len_data = len(self.annotations)
-        train_cutoff = round(self.split[0]*len_data)
-        val_cutoff = round(train_cutoff + self.split[1]*len_data)
 
-        sets = [('train', 0, train_cutoff), ('val', train_cutoff, val_cutoff), ('test', val_cutoff,
-                                                                                len(self.annotations) + 1)]
-        data_iterator = list(enumerate(self.annotations.keys()))
-        shuffle(data_iterator)
+        for annotations, set in [(self.train_annotations, 'train'), (self.val_annotations, 'val'),
+                                 (self.test_annotations, 'test')]:
+            self.create_gt_files_for_computing_error_rate(annotations, set)
+            self.create_label_files(annotations, set)
 
-        self.create_gt_files_for_computing_error_rate(data_iterator, self.formated_data_dir_path, sets)
-        self.create_label_files(data_iterator, self.formated_data_dir_path, sets)
+    def create_label_files(self, annotations, set):
+        formated_data_dir_path = self.formated_data_dir_path
+        labels_pointer_opened_file = open("{}/{}.txt".format(formated_data_dir_path, set), "w")
+        for index, image_filename in enumerate(annotations.keys()):
+            labels_pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages',
+                                                          image_filename.replace('jpeg', 'jpg')) + '\n')
+            self.create_label_file(annotations, image_filename)
+        labels_pointer_opened_file.close()
 
-    def create_label_files(self, data_iterator, formated_data_dir_path, sets):
-        for set, set_start_idx, set_end_idx in sets:
-            labels_pointer_opened_file = open("{}/{}.txt".format(formated_data_dir_path, set), "w")
-            for index, image_filename in data_iterator[set_start_idx:set_end_idx]:
+    def create_gt_files_for_computing_error_rate(self, annotations, set):
+        gt_opened_file = open("{}/{}_gt.txt".format(self.formated_data_dir_path, set), "w")
+        for index, image_filename in enumerate(annotations.keys()):
+            tomatoes = []
+            metadata = annotations[image_filename]
+            for triplet in metadata:
+                tomato = self.mapping[triplet["id"]]
+                if tomato:
+                    tomatoes.append(tomato)
+            gt_opened_file.write(str(bool(tomatoes)) + '\n')
+        gt_opened_file.close()
 
-                labels_pointer_opened_file.write(os.path.join(os.getcwd(), formated_data_dir_path[2:], 'JPEGImages',
-                                                              image_filename.replace('jpeg', 'jpg')) + '\n')
-                self.create_label_file(formated_data_dir_path, image_filename)
-            labels_pointer_opened_file.close()
-
-    def create_gt_files_for_computing_error_rate(self, data_iterator, formated_data_dir_path, sets):
-        for set, set_start_idx, set_end_idx in sets:
-            gt_opened_file = open("{}/{}_gt.txt".format(formated_data_dir_path, set), "w")
-            for index, image_filename in data_iterator[set_start_idx:set_end_idx]:
-                tomatoes = []
-                metadata = self.annotations[image_filename]
-                for triplet in metadata:
-                    tomato = self.mapping[triplet["id"]]
-                    if tomato:
-                        tomatoes.append(tomato)
-                gt_opened_file.write(str(bool(tomatoes)) + '\n')
-            gt_opened_file.close()
-
-    def create_label_file(self, formated_data_dir_path, image_filename):
-        metadata = self.annotations[image_filename]
+    def create_label_file(self, annotations, image_filename):
+        metadata = annotations[image_filename]
         labels = []
         for triplet in metadata:
             label = self.mapping[triplet["id"]]
@@ -136,7 +151,7 @@ class TomatoDatasetTool:
                 bbox = self.normalize_bbox(bbox)
                 labels.append([0] + bbox)
         image_filename_without_ext = os.path.splitext(image_filename)[0]
-        label_file_path = os.path.join(formated_data_dir_path, 'labels', '{}.txt'.format(image_filename_without_ext))
+        label_file_path = os.path.join(self.formated_data_dir_path, 'labels', '{}.txt'.format(image_filename_without_ext))
         label_opened_file = open("{}".format(label_file_path), "w")
         for label in labels:
             str_label = " ".join(map(str, label))
@@ -148,10 +163,10 @@ class TomatoDatasetTool:
             raise ValueError('Cannot upsample and downsample at same time')
         elif self.upsample:
             augmented_annotations = self.up_sample_data()
-            self.annotations = {**self.annotations, **augmented_annotations}
+            self.train_annotations = {**self.train_annotations, **augmented_annotations}
         elif self.downsample:
             downsampled_annotations = self.down_sample_data()
-            self.annotations = downsampled_annotations
+            self.train_annotations = downsampled_annotations
 
         self.format_data()
 
