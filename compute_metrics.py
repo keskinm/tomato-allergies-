@@ -1,7 +1,7 @@
 import argparse
 
 
-def main(yolo_output_filepath, gt_filepath):
+def compute_metrics(yolo_output_filepath, gt_filepath):
     preds = []
     with open(yolo_output_filepath) as opened_yolo_output_file:
         yolo_output = opened_yolo_output_file.readlines()[3:]
@@ -53,6 +53,6 @@ if __name__ == "__main__":
     parser.add_argument("--gt-filepath", required=True, type=str, help="path to gt txtfile")
     args = parser.parse_args()
     args = vars(args)
-    main(**args)
+    compute_metrics(**args)
 
 
