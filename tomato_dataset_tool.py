@@ -4,7 +4,6 @@ import csv
 import os
 import shutil
 import random
-from random import shuffle
 import imageio
 import imgaug as ia
 from imgaug.augmentables.bbs import BoundingBoxesOnImage
@@ -271,6 +270,7 @@ class TomatoDatasetTool:
         cv2.destroyAllWindows()
 
     def inspect_formated_bboxes_from_yolo_parser_pov(self, w=600, h=600, set='train'):
+        """YOU CAN RUN THIS FUNCTION AFTER YOU FORMATED YOUR DATA IN YOLO FORMAT"""
         os.makedirs('./data/inspect', exist_ok=True)
         labels_pointer_opened_file = open("{}/{}.txt".format(self.formated_data_dir_path, set), "r")
         labels_pointer = labels_pointer_opened_file.readlines()
