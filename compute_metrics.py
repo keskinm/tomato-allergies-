@@ -4,7 +4,7 @@ import argparse
 def main(yolo_output_filepath, gt_filepath):
     preds = []
     with open(yolo_output_filepath) as opened_yolo_output_file:
-        yolo_output = opened_yolo_output_file.readlines()[:-1]
+        yolo_output = opened_yolo_output_file.readlines()[3:]
         for line_count in range(len(yolo_output)-1):
             if yolo_output[line_count].startswith('Enter'):
                 if yolo_output[line_count + 1].startswith('Enter'):
@@ -36,7 +36,7 @@ def main(yolo_output_filepath, gt_filepath):
             else:
                 fp += 1
 
-    error_rate = (tp+tn)/(tp+tn+fp+fn)
+    error_rate = (fp+fn)/(tp+tn+fp+fn)
 
     print("tp:", tp)
     print("tn:", tn)
