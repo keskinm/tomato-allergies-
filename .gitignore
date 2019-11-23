@@ -1,5 +1,5 @@
 ./data
-./darknet
+./darknet-master
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

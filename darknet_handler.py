@@ -4,16 +4,17 @@ import shutil
 import argparse
 
 
-def main(install, train, test, ckpoint_dir):
+def main(install):
     if install:
-        os.makedirs('./data', exist_ok=True)
-        commands = ['git clone https://github.com/AlexeyAB/darknet.git',
-                    'cd darknet',
-                    'make']
+        commands = ['wget https://github.com/AlexeyAB/darknet/archive/master.zip',
+                    'unzip master.zip -d .']
         for command in commands:
-            subprocess.run(command, check=False, shell=True, cwd='./data')
+            subprocess.run(command, check=False, shell=True)
+        os.remove('master.zip')
+        darknet_dir = './darknet-master'
+        subprocess.run('make', check=False, shell=True, cwd=darknet_dir)
 
-        darknet_cfg_dir = './data/darknet/cfg'
+        darknet_cfg_dir = '{}/cfg'.format(darknet_dir)
         shutil.copy('./cfg/tomato.data', darknet_cfg_dir)
         shutil.copy('./cfg/tomato.cfg', darknet_cfg_dir)
         shutil.copy('./cfg/tomato.names', darknet_cfg_dir)
