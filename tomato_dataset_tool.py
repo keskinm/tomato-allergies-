@@ -13,9 +13,8 @@ import cv2
 
 
 class TomatoDatasetTool:
-    def __init__(self, prepare_data, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path,
+    def __init__(self, data_annotations_file_path, labels_mapping_file_path, split, data_dir_path,
                  downsample, upsample, seed, upsampling_factor):
-        self.prepare_data = prepare_data
         self.annotations = self.parse_annotations(data_annotations_file_path)
         self.mapping = self.label_mapping(labels_mapping_file_path)
         self.split = split
@@ -308,9 +307,12 @@ class TomatoDatasetTool:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--prepare-data", action='store_true', help="prepare data")
-    parser.add_argument("--downsample", action='store_true', help="downsampling data")
-    parser.add_argument("--upsample", action='store_true', help="upsampling data")
+    parser.add_argument("--downsample",
+                        action='store_true',
+                        help="downsampling data")
+    parser.add_argument("--upsample",
+                        action='store_true',
+                        help="upsampling data")
     parser.add_argument("--upsampling-factor",
                         type=int,
                         default=5,

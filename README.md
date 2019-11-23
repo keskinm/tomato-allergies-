@@ -2,7 +2,7 @@
 
 All images could be by default in ./data/assignment_imgs or you can pass your own path in arg. 
 
-## Requirements:
+## Requirements installation:
 
 Simply `python3 -m pip install .`
 
