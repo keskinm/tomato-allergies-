@@ -1,0 +1,6 @@
+classes= 1
+train  = /home/keskin/tomato_allergies_/data/formated/train.txt
+valid  = /home/keskin/tomato_allergies_/data/formated/test.txt
+names = data/tomato.names
+backup = backup
+
