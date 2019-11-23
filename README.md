@@ -12,7 +12,7 @@ First transform the data in darknet format:
 
 `python3 -m tomato_dataset_tool`
 
-To upsample tomatoes in training, simply run: 
+You could also upsample tomatoes for your training. Simply run instead: 
 
 `python3 -m tomato_dataset_tool --upsample`
 
@@ -23,10 +23,10 @@ Install darknet:
 
 Training: 
 
-`python3 -m darknet --train --ckpts-file-path <path>`
+`python3 -m darknet_handler --train --ckpts-file-path <path>`
 
 Testing and look at error rate:
 
-`python3 -m tomato_dataset_tool --test --ckpts-file-path <path>`
+`python3 -m darknet_handler --test --ckpts-file-path <path>`
 
  
