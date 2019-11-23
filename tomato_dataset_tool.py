@@ -63,7 +63,7 @@ class TomatoDatasetTool:
                     positive_annotations.setdefault(img_filename, []).append(triplet)
         return positive_annotations
 
-    def down_sample_data(self, keep_negative_rate=0.05, keep_positive_rate=1.):
+    def down_sample_negatives(self, keep_negative_rate=0.05, keep_positive_rate=1.):
         down_sampled_dataset = {}
         total_positives = len(self.positive_annotations())
         total_negatives = len(self.train_annotations) - total_positives
@@ -161,10 +161,10 @@ class TomatoDatasetTool:
         if self.upsample and self.downsample:
             raise ValueError('Cannot upsample and downsample at same time')
         elif self.upsample:
-            augmented_annotations = self.up_sample_data()
+            augmented_annotations = self.up_sample_positives()
             self.train_annotations = {**self.train_annotations, **augmented_annotations}
         elif self.downsample:
-            downsampled_annotations = self.down_sample_data()
+            downsampled_annotations = self.down_sample_negatives()
             self.train_annotations = downsampled_annotations
 
         self.format_data()
@@ -186,7 +186,7 @@ class TomatoDatasetTool:
 
         return labels
 
-    def up_sample_data(self):
+    def up_sample_positives(self):
         def ia_format_bbox(bbox):
             return [bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]]
 
