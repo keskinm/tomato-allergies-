@@ -26,12 +26,7 @@ def main(install, train, test, ckpts_file_path, detection_threshold, gpu):
         for command in commands:
             subprocess.run(command, check=False, shell=True)
         os.remove('master.zip')
-        subprocess.run('make', check=False, shell=True, cwd=darknet_dir)
-        create_sets_pointer_file()
-        darknet_cfg_dir = '{}/cfg'.format(darknet_dir)
-        shutil.copy('./cfg/tomato.data', darknet_cfg_dir)
-        shutil.copy('./cfg/tomato.cfg', darknet_cfg_dir)
-        shutil.copy('./cfg/tomato.names', darknet_cfg_dir)
+
         with open(os.path.join(darknet_dir, 'Makefile'), "r") as makefile_opened_file:
             content = makefile_opened_file.read()
             if gpu:
@@ -39,6 +34,13 @@ def main(install, train, test, ckpts_file_path, detection_threshold, gpu):
             modified_content = content.replace('OPENCV=0', 'OPENCV=1')
         with open(os.path.join(darknet_dir, 'Makefile'), "w") as makefile_opened_file:
             makefile_opened_file.write(modified_content)
+
+        subprocess.run('make', check=False, shell=True, cwd=darknet_dir)
+        create_sets_pointer_file()
+        darknet_cfg_dir = '{}/cfg'.format(darknet_dir)
+        shutil.copy('./cfg/tomato.data', darknet_cfg_dir)
+        shutil.copy('./cfg/tomato.cfg', darknet_cfg_dir)
+        shutil.copy('./cfg/tomato.names', darknet_cfg_dir)
 
     if train:
         if ckpts_file_path:
