@@ -67,7 +67,7 @@ Testing and look at error rate:
 
 It will create `preds.txt` in darknet-master directory. Then use compute_metrics.py to get the error rate:
 
-`python3 -m compute_metrics --yolo-output-filepath ./darknet-master/preds.txt --gt-filepath ./formated/test_gt.txt`
+`python3 -m compute_metrics --yolo-output-filepath ./darknet-master/preds.txt --gt-filepath ./data/formated/test_gt.txt`
 
 
 
