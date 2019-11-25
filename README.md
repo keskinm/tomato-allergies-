@@ -31,13 +31,23 @@ The detection threshold used is 0.15.
 Note: Overfitting is not fully attained and better ER is possible with more iterations.
 
 <h2>Requirements installation</h2>
-Simply ` python3 -m pip install . ` or ` python3 -m pip install -r requirements.txt `
+Simply `python3 -m pip install .` or `python3 -m pip install -r requirements.txt`
 
 <h2>Usage</h2>
 
 <h3>Formatting</h3>
 
-All images could be by default in ./data/assignment_imgs or you can pass your own path in arg. 
+All images should be by default in `./data/assignment_imgs` 
+
+`img_annotations.json` should be in `./data`
+
+`label_mapping.csv` should be also in `./data`
+
+or you can pass your own paths with `--data-dir-path` , 
+
+`--data-annotations-file_path` , 
+
+`--labels-mapping-file-path`
 
 First transform the data in darknet format:
 
