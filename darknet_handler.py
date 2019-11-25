@@ -45,9 +45,10 @@ def main(install, train, test, ckpts_file_path, detection_threshold, gpu, opencv
 
     if train:
         if ckpts_file_path:
-            command = './darknet detector train cfg/tomato.data cfg/tomato.cfg {} -map'.format(ckpts_file_path)
+            command = './darknet detector train cfg/tomato.data cfg/tomato.cfg {} -dont_show ' \
+                      '-map'.format(ckpts_file_path)
         else:
-            command = './darknet detector train cfg/tomato.data cfg/tomato.cfg -map'
+            command = './darknet detector train cfg/tomato.data cfg/tomato.cfg -dont_show -map'
         subprocess.run(command, check=False, shell=True, cwd=darknet_dir)
 
     if test:
