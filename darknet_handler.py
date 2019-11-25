@@ -16,7 +16,7 @@ def create_sets_pointer_file():
     sets_pointer_opened_file.close()
 
 
-def main(install, train, test, ckpts_file_path, detection_threshold, gpu):
+def main(install, train, test, ckpts_file_path, detection_threshold, gpu, opencv2):
     ckpts_file_path = ckpts_file_path.replace('./', os.getcwd()+'/')
     darknet_dir = './darknet-master'
 
@@ -31,9 +31,10 @@ def main(install, train, test, ckpts_file_path, detection_threshold, gpu):
             content = makefile_opened_file.read()
             if gpu:
                 content = content.replace('GPU=0', 'GPU=1')
-            modified_content = content.replace('OPENCV=0', 'OPENCV=1')
+            if opencv2:
+                content = content.replace('OPENCV=0', 'OPENCV=1')
         with open(os.path.join(darknet_dir, 'Makefile'), "w") as makefile_opened_file:
-            makefile_opened_file.write(modified_content)
+            makefile_opened_file.write(content)
 
         subprocess.run('make', check=False, shell=True, cwd=darknet_dir)
         create_sets_pointer_file()
@@ -65,6 +66,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--install", action='store_true', help="prepare data")
     parser.add_argument("--gpu", action='store_true', help="prepare data")
+    parser.add_argument("--opencv2", action='store_true', help="prepare data")
     parser.add_argument("--train", action='store_true', help="train on train set, compute map on valid set")
     parser.add_argument("--test", action='store_true', help="test on test set")
     parser.add_argument("--detection-threshold", type=float, default='0.15', help="detection threshold to considere "

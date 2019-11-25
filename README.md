@@ -33,8 +33,8 @@ Note: Overfitting is not fully attained and better ER is possible with more iter
 <h2>Requirements installation</h2>
 Simply `python3 -m pip install .` or `python3 -m pip install -r requirements.txt`
 
-You need OpenCV >= 2.4 for compiling darknet and be able to compute metrics. 
-(https://docs.opencv.org/3.4/d7/d9f/tutorial_linux_install.html). Check then /usr/include/opencv2 
+You need OpenCV >= 2.4 for compiling darknet with opencv2 and be able to compute metrics. 
+(https://docs.opencv.org/3.4/d7/d9f/tutorial_linux_install.html). Check then /usr/include/opencv2.
 
 <h2>Usage</h2>
 
@@ -69,6 +69,9 @@ Once it's done,
 Install darknet: 
 
 `python3 -m darknet_handler --install`
+
+Note: you can pass `--gpu` to compile with gpu,
+also you can pass `--opencv` to compile with opencv (need for testing and computing metrics)
 
 Training: 
 
