@@ -31,7 +31,7 @@ The detection threshold used is 0.15.
 Note: Overfitting is not fully attained and better ER is possible with more iterations.
 
 <h2>Requirements installation</h2>
-Simply ` python3 -m pip install . `
+Simply ` python3 -m pip install . ` or ` python3 -m pip install -r requirements.txt `
 
 <h2>Usage</h2>
 
