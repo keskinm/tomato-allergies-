@@ -44,13 +44,11 @@ def main(install, train, test, ckpts_file_path, detection_threshold):
             raise ValueError('Cannot test without ckpt file')
         else:
             test_pointer_file_path = '{}/data/formated/test.txt'.format(os.getcwd())
-            test_gt_file_path = '{}/data/formated/test_gt.txt'.format(os.getcwd())
             command = './darknet detector test cfg/tomato.data cfg/tomato.cfg {ckpts_file_path} -dont_show ' \
                       '-ext_output < {test_set} > preds.txt -thresh {th}'.format(ckpts_file_path=ckpts_file_path,
                                                                     test_set=test_pointer_file_path,
                                                                     th=detection_threshold)
             subprocess.run(command, check=False, shell=True, cwd=darknet_dir)
-            compute_metrics('preds.txt', test_gt_file_path)
 
 
 if __name__ == "__main__":
