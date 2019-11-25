@@ -16,7 +16,7 @@ and final training size is 4061 (1706 without tomatoes + 2355 with tomatoes imag
 <h4>Yolo specs for training</h4>
 
 `batch=32` ; `subdivisions=16` ; `width=640` ; `height=640` ; `momentum=0.9` ; `decay=0.0005` ; 
-`learning_rate=0.001` ; `iterations=2500` 
+`learning_rate=0.001` 
 
 <h4>Transfer learning</h4>
 weights are initialized with darknet53 model trained on Imagenet. 
@@ -31,7 +31,7 @@ The detection threshold used is 0.15.
 Note: Overfitting is not fully attained and better ER is possible with more iterations.
 
 <h2>Requirements installation</h2>
-Simply `python3 -m pip install .`
+Simply ` python3 -m pip install . `
 
 <h2>Usage</h2>
 
