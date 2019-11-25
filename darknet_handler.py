@@ -58,7 +58,7 @@ if __name__ == "__main__":
     parser.add_argument("--install", action='store_true', help="prepare data")
     parser.add_argument("--train", action='store_true', help="train on train set, compute map on valid set")
     parser.add_argument("--test", action='store_true', help="test on test set")
-    parser.add_argument("--detection-threshold", type=float, default='0.05', help="detection threshold to considere "
+    parser.add_argument("--detection-threshold", type=float, default='0.15', help="detection threshold to considere "
                                                                                   "there is an object")
     parser.add_argument("--ckpts-file-path", type=str, default='', help="path to ckpts for train/test")
 
