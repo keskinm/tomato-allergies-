@@ -24,7 +24,7 @@ weights are initialized with darknet53 model trained on Imagenet.
 `wget https://pjreddie.com/media/files/darknet53.conv.74` to get it.
 
 
-### Error rate on test set = 0.11 with checkpoint in release checkpoint_0.3
+#### error rate on test set = 0.11 with checkpoint in release checkpoint_0.3
 
 Note: Overfitting is not fully attained and better ER is possible with 2500 iterations
 
