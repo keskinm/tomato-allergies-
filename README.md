@@ -18,6 +18,12 @@ and final training size is 4061 (1706 without tomatoes + 2355 with tomatoes imag
 `batch=32` ; `subdivisions=16` ; `width=640` ; `height=640` ; `momentum=0.9` ; `decay=0.0005` ; 
 `learning_rate=0.001` ; `iterations=2500` 
 
+#### transfer learning
+weights are initialized with darknet53 model trained on Imagenet. 
+
+`wget https://pjreddie.com/media/files/darknet53.conv.74` to get it.
+
+
 ### Error rate on test set = 0.11 with checkpoint in release checkpoint_0.3
 
 Note: Overfitting is not fully attained and better ER is possible with 2500 iterations
