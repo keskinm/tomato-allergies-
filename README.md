@@ -4,7 +4,7 @@
 
 ![Training viz](https://i.ibb.co/0jD3T31/chart.png)
 
-<h3>Training specs</h3>
+<h3>Evaluation specs</h3>
 
 <h4>data specs</h4>
 
@@ -13,7 +13,7 @@ Dataset is shuffled and split in 2100/450/450 (train/val/test).
 Then the images containing tomato bbox (394 such images) in training are upsampled, 
 and final training size is 4061 (1706 without tomatoes + 2355 with tomatoes images).
 
-<h4>yolo specs</h4>
+<h4>yolo specs for training</h4>
 
 `batch=32` ; `subdivisions=16` ; `width=640` ; `height=640` ; `momentum=0.9` ; `decay=0.0005` ; 
 `learning_rate=0.001` ; `iterations=2500` 
