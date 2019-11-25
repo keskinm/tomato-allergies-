@@ -71,7 +71,7 @@ Install darknet:
 `python3 -m darknet_handler --install`
 
 Note: you can pass `--gpu` to compile with gpu,
-also you can pass `--opencv` to compile with opencv (need for testing and computing metrics)
+also you can pass `--opencv2` to compile with opencv (need for testing and computing metrics)
 
 Training: 
 
