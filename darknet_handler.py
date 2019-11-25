@@ -17,6 +17,7 @@ def create_sets_pointer_file():
 
 
 def main(install, train, test, ckpts_file_path, detection_threshold):
+    ckpts_file_path.replace('./', os.getcwd())
     darknet_dir = './darknet-master'
 
     if install:
