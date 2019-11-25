@@ -44,6 +44,9 @@ You could also upsample tomatoes for your training. Simply run instead:
 
 `python3 -m tomato_dataset_tool --upsample`
 
+All new files are located in `./data/formated` (including gt text files for classification, i.e. if an image contains 
+a tomato)
+
 Once it's done,
 Install darknet: 
 
@@ -56,6 +59,10 @@ Training:
 Testing and look at error rate:
 
 `python3 -m darknet_handler --test --ckpts-file-path <path>`
+
+It will create `preds.txt` in darknet-master directory. Then use compute_metrics.py to get the error rate:
+
+`python3 -m compute_metrics --yolo-output-filepath ./darknet-master/pre_metrics.txt --gt-filepath ./formated/test_gt.txt`
 
 
 
