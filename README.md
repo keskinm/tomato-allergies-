@@ -34,6 +34,9 @@ Note: Overfitting is not fully attained and better ER is possible with more iter
 Simply `python3 -m pip install .`
 
 <h2>Usage</h2>
+
+<h3>Formatting</h3>
+
 All images could be by default in ./data/assignment_imgs or you can pass your own path in arg. 
 
 First transform the data in darknet format:
@@ -46,6 +49,8 @@ You could also upsample tomatoes for your training. Simply run instead:
 
 All new files are located in `./data/formated` (including gt text files for classification, i.e. if an image contains 
 a tomato)
+
+<h3>Train and test</h3>
 
 Once it's done,
 Install darknet: 
