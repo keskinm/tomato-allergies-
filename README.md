@@ -25,7 +25,7 @@ weights are initialized with darknet53 model trained on Imagenet.
 
 <h4>error rate on test set = 0.11 with checkpoint in release checkpoint_0.3</h4>
 
-Note: Overfitting is not fully attained and better ER is possible with 2500 iterations
+Note: Overfitting is not fully attained and better ER is possible with more iterations
 
 <h2>Requirements installation</h2>
 Simply `python3 -m pip install .`
