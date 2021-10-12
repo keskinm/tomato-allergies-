@@ -13,7 +13,7 @@ setup(
         'matplotlib==3.1.1',
         'networkx==2.4',
         'numpy==1.17.4',
-        'opencv-contrib-python==4.1.1.26',
+        'opencv-contrib-python==4.2.0.32',
         'Pillow==6.2.1',
         'pyparsing==2.4.5',
         'python-dateutil==2.8.1',
