@@ -12,7 +12,7 @@ setup(
         'kiwisolver==1.1.0',
         'matplotlib==3.1.1',
         'networkx==2.4',
-        'numpy==1.17.4',
+        'numpy==1.22.0',
         'opencv-contrib-python==4.1.1.26',
         'Pillow==6.2.1',
         'pyparsing==2.4.5',
